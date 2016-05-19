@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEditor;
 
+/*
+ Original scripts from asset store item RTS camera:
+ 	D. Sylkin. RTS camera, Version 1.0,  [Online]. Available: https://www.assetstore.unity3d.com/en/#!/content/43321.
+ Modified by:
+ 	Francis Charette Migneault
+*/
 namespace RTS_Cam
 {
     [CustomEditor(typeof(RTS_Camera))]
@@ -109,6 +115,7 @@ namespace RTS_Cam
             {
                 camera.mouseRotationKey = (KeyCode)EditorGUILayout.EnumPopup("Mouse rotation key: ", camera.mouseRotationKey);
                 camera.mouseRotationSpeed = EditorGUILayout.FloatField("Mouse rotation speed: ", camera.mouseRotationSpeed);
+				//camera.lockVerticalRotation = EditorGUILayout.Toggle("Lock vertical rotation: ", camera.lockVerticalRotation);
             }
         }
 
@@ -144,7 +151,7 @@ namespace RTS_Cam
             }
 			if (camera.useScrollwheelZooming) {
 				camera.scrollWheelZoomingSensitivity = EditorGUILayout.FloatField("Scrollwheel sensitivity: ", camera.scrollWheelZoomingSensitivity);
-				camera.invertScrollDirection = EditorGUILayout.Toggle("Inverted scrollwheel:", camera.invertScrollDirection);
+				camera.invertScrollDirection = EditorGUILayout.Toggle("Inverted scrollwheel: ", camera.invertScrollDirection);
 			}
             if (camera.useScrollwheelZooming || camera.useKeyboardZooming)
             {

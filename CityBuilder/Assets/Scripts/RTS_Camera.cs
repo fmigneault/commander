@@ -2,8 +2,8 @@
 using System.Collections;
 
 /*
- Base scripts from asset RTS camera:
- 	D. Sylkin. RTS camera (RTS camera), Version 1.0,  [Online]. Available: https://www.assetstore.unity3d.com/en/#!/content/43321.
+ Original scripts from asset store item RTS camera:
+ 	D. Sylkin. RTS camera, Version 1.0,  [Online]. Available: https://www.assetstore.unity3d.com/en/#!/content/43321.
  Modified by:
  	Francis Charette Migneault
 */
@@ -112,6 +112,7 @@ namespace RTS_Cam
         public KeyCode rotateLeftKey = KeyCode.Z;
 
         public bool useMouseRotation = true;
+		//public bool lockVerticalRotation = false;
         public KeyCode mouseRotationKey = KeyCode.Mouse1;
 
         private Vector2 KeyboardInput
@@ -203,6 +204,7 @@ namespace RTS_Cam
             else
                 Move();
 
+			//Zoom();
             HeightCalculation();
             Rotation();
             LimitPosition();
@@ -280,17 +282,39 @@ namespace RTS_Cam
             m_Transform.position = Vector3.Lerp(m_Transform.position, 
                 new Vector3(m_Transform.position.x, targetHeight + difference, m_Transform.position.z), Time.deltaTime * heightDampening);
         }
+			
+		/// <summary>
+		/// zoom camera
+		/// </summary>
+		private void Zoom() {
+
+			float distanceToGround = DistanceToGround();
+			Debug.Log(string.Format("{0} {1} {2}", distanceToGround, minHeight, maxHeight));
+
+			if (useScrollwheelZooming)
+				zoomPos += ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity * (invertScrollDirection ? 1 : -1);			
+			if (useKeyboardZooming)
+				zoomPos += ZoomDirection * Time.deltaTime * keyboardZoomingSensitivity;
+
+			Debug.Log(string.Format("{0} {1} {2}", zoomPos, ScrollWheel, scrollWheelZoomingSensitivity));
+			m_Transform.Translate(Vector3.forward * zoomPos, Space.Self);
+		
+		}
+
 
         /// <summary>
         /// rotate camera
         /// </summary>
         private void Rotation()
         {
-            if(useKeyboardRotation)
-                transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSped, Space.World);
+			if(useKeyboardRotation)
+                transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSped, Space.World);			
 
-            if (useMouseRotation && Input.GetKey(mouseRotationKey))
-                m_Transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+			if (useMouseRotation && Input.GetKey(mouseRotationKey)) {
+				// Movement only along horizontal (locked vertical)
+				//if (lockVerticalRotation)
+					m_Transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+			}
         }
 
         /// <summary>

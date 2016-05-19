@@ -31,15 +31,14 @@ namespace RTS_Cam
 #endif
 
         #endregion
-
-        private Transform m_Transform; //camera tranform
-        public bool useFixedUpdate = false; //use FixedUpdate() or Update()
+		        
+        public bool useFixedUpdate = false; 				//use FixedUpdate() or Update()
 
         #region Movement
 
-        public float keyboardMovementSpeed = 5f; //speed with keyboard movement
-        public float screenEdgeMovementSpeed = 3f; //spee with screen edge movement
-        public float followingSpeed = 5f; //speed when following a target
+        public float keyboardMovementSpeed = 5f; 			//speed with keyboard movement
+        public float screenEdgeMovementSpeed = 3f; 			//spee with screen edge movement
+        public float followingSpeed = 5f; 					//speed when following a target
         public float rotationSped = 3f;
         public float panningSpeed = 10f;
         public float mouseRotationSpeed = 10f;
@@ -49,29 +48,30 @@ namespace RTS_Cam
         #region Height
 
         public bool autoHeight = true;
-        public LayerMask groundMask = -1; //layermask of ground or other objects that affect height
+        public LayerMask groundMask = -1; 					//layermask of ground or other objects that affect height
 
-        public float maxHeight = 10f; //maximal height
-        public float minHeight = 15f; //minimnal height
+        public float maxHeight = 10f;						//maximal height
+        public float minHeight = 15f; 						//minimnal height
         public float heightDampening = 5f; 
         public float keyboardZoomingSensitivity = 2f;
         public float scrollWheelZoomingSensitivity = 25f;
 
-        private float zoomPos = 0; //value in range (0, 1) used as t in Matf.Lerp
+        private float zoomPos = 0; 							//value in range (0, 1) used as t in Matf.Lerp
+		GameObject scrolling;
 
         #endregion
 
         #region MapLimits
 
         public bool limitMap = true;
-        public float limitX = 50f; //x limit of map
-        public float limitY = 50f; //z limit of map
+        public float limitX = 50f; 							//x limit of map
+        public float limitY = 50f; 							//z limit of map
 
         #endregion
 
         #region Targeting
 
-        public Transform targetFollow; //target to follow
+        public Transform targetFollow; 						//target to follow
         public Vector3 targetOffset;
 
         /// <summary>
@@ -79,10 +79,7 @@ namespace RTS_Cam
         /// </summary>
         public bool FollowingTarget
         {
-            get
-            {
-                return targetFollow != null;
-            }
+            get { return targetFollow != null; }
         }
 
         #endregion
@@ -175,7 +172,7 @@ namespace RTS_Cam
 
         private void Start()
         {
-            m_Transform = transform;
+			scrolling = new GameObject();
         }
 
         private void Update()
@@ -204,9 +201,8 @@ namespace RTS_Cam
             else
                 Move();
 
-			//Zoom();
-            HeightCalculation();
             Rotation();
+			Zoom();
             LimitPosition();
         }
 
@@ -222,9 +218,9 @@ namespace RTS_Cam
                 desiredMove *= keyboardMovementSpeed;
                 desiredMove *= Time.deltaTime;
                 desiredMove = Quaternion.Euler(new Vector3(0f, transform.eulerAngles.y, 0f)) * desiredMove;
-                desiredMove = m_Transform.InverseTransformDirection(desiredMove);
+                desiredMove = transform.InverseTransformDirection(desiredMove);
 
-                m_Transform.Translate(desiredMove, Space.Self);
+                transform.Translate(desiredMove, Space.Self);
             }
 
             if (useScreenEdgeInput)
@@ -242,9 +238,9 @@ namespace RTS_Cam
                 desiredMove *= screenEdgeMovementSpeed;
                 desiredMove *= Time.deltaTime;
                 desiredMove = Quaternion.Euler(new Vector3(0f, transform.eulerAngles.y, 0f)) * desiredMove;
-                desiredMove = m_Transform.InverseTransformDirection(desiredMove);
+                desiredMove = transform.InverseTransformDirection(desiredMove);
 
-                m_Transform.Translate(desiredMove, Space.Self);
+                transform.Translate(desiredMove, Space.Self);
             }       
         
             if(usePanning && Input.GetKey(panningKey) && MouseAxis != Vector2.zero)
@@ -254,33 +250,10 @@ namespace RTS_Cam
                 desiredMove *= panningSpeed;
                 desiredMove *= Time.deltaTime;
                 desiredMove = Quaternion.Euler(new Vector3(0f, transform.eulerAngles.y, 0f)) * desiredMove;
-                desiredMove = m_Transform.InverseTransformDirection(desiredMove);
+                desiredMove = transform.InverseTransformDirection(desiredMove);
 
-                m_Transform.Translate(desiredMove, Space.Self);
+                transform.Translate(desiredMove, Space.Self);
             }
-        }
-
-        /// <summary>
-        /// calcualte height
-        /// </summary>
-        private void HeightCalculation()
-        {
-            float distanceToGround = DistanceToGround();
-			if(useScrollwheelZooming)				
-				zoomPos += ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity * (invertScrollDirection ? 1 : -1);			
-            if (useKeyboardZooming)
-                zoomPos += ZoomDirection * Time.deltaTime * keyboardZoomingSensitivity;
-
-            zoomPos = Mathf.Clamp01(zoomPos);
-
-            float targetHeight = Mathf.Lerp(minHeight, maxHeight, zoomPos);
-            float difference = 0; 
-
-            if(distanceToGround != targetHeight)
-                difference = targetHeight - distanceToGround;
-
-            m_Transform.position = Vector3.Lerp(m_Transform.position, 
-                new Vector3(m_Transform.position.x, targetHeight + difference, m_Transform.position.z), Time.deltaTime * heightDampening);
         }
 			
 		/// <summary>
@@ -288,17 +261,22 @@ namespace RTS_Cam
 		/// </summary>
 		private void Zoom() {
 
-			float distanceToGround = DistanceToGround();
-			Debug.Log(string.Format("{0} {1} {2}", distanceToGround, minHeight, maxHeight));
-
-			if (useScrollwheelZooming)
-				zoomPos += ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity * (invertScrollDirection ? 1 : -1);			
+			// Get scroll value from keyboard / mousewheel
+			if(useScrollwheelZooming)
+				// Ratio of about 10 times required to obtain similar zoom as with keyboard
+				zoomPos +=  10 * ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity * (invertScrollDirection ? 1 : -1);			
 			if (useKeyboardZooming)
 				zoomPos += ZoomDirection * Time.deltaTime * keyboardZoomingSensitivity;
 
-			Debug.Log(string.Format("{0} {1} {2}", zoomPos, ScrollWheel, scrollWheelZoomingSensitivity));
-			m_Transform.Translate(Vector3.forward * zoomPos, Space.Self);
-		
+			// Get resulting position with scroll applied
+			zoomPos *= Mathf.Clamp01(heightDampening);
+			scrolling.transform.position = transform.position;
+			scrolling.transform.rotation = transform.rotation;
+			scrolling.transform.Translate(Vector3.back * zoomPos);
+
+			// Apply scroll if within height limits
+			if (scrolling.transform.position.y > minHeight && scrolling.transform.position.y < maxHeight)
+				transform.Translate(Vector3.back * zoomPos);
 		}
 
 
@@ -313,7 +291,7 @@ namespace RTS_Cam
 			if (useMouseRotation && Input.GetKey(mouseRotationKey)) {
 				// Movement only along horizontal (locked vertical)
 				//if (lockVerticalRotation)
-					m_Transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+					transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
 			}
         }
 
@@ -322,8 +300,8 @@ namespace RTS_Cam
         /// </summary>
         private void FollowTarget()
         {
-            Vector3 targetPos = new Vector3(targetFollow.position.x, m_Transform.position.y, targetFollow.position.z) + targetOffset;
-            m_Transform.position = Vector3.MoveTowards(m_Transform.position, targetPos, Time.deltaTime * followingSpeed);
+            Vector3 targetPos = new Vector3(targetFollow.position.x, transform.position.y, targetFollow.position.z) + targetOffset;
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, Time.deltaTime * followingSpeed);
         }
 
         /// <summary>
@@ -334,9 +312,9 @@ namespace RTS_Cam
             if (!limitMap)
                 return;
                 
-            m_Transform.position = new Vector3(Mathf.Clamp(m_Transform.position.x, -limitX, limitX),
-                m_Transform.position.y,
-                Mathf.Clamp(m_Transform.position.z, -limitY, limitY));
+            transform.position = new Vector3(Mathf.Clamp(transform.position.x, -limitX, limitX),
+                transform.position.y,
+                Mathf.Clamp(transform.position.z, -limitY, limitY));
         }
 
         /// <summary>
@@ -362,10 +340,10 @@ namespace RTS_Cam
         /// <returns></returns>
         private float DistanceToGround()
         {
-            Ray ray = new Ray(m_Transform.position, Vector3.down);
+            Ray ray = new Ray(transform.position, Vector3.down);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, groundMask.value))
-                return (hit.point - m_Transform.position).magnitude;
+                return (hit.point - transform.position).magnitude;
 
             return 0f;
         }

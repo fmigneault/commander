@@ -23,7 +23,7 @@ namespace RTS_Cam
             {
                 {"Movement", MovementTab},
                 {"Rotation", RotationTab},
-                {"Height", HeightTab}
+                {"Zoom / Height", HeightTab}
             });
             tabs.SetCurrentMethod(camera.lastTab);
         }

@@ -142,9 +142,10 @@ namespace RTS_Cam
                 GUILayout.Label("Scrollwheel zooming: ", EditorStyles.boldLabel, GUILayout.Width(170f));
                 camera.useScrollwheelZooming = EditorGUILayout.Toggle(camera.useScrollwheelZooming);
             }
-            if (camera.useScrollwheelZooming)
-                camera.scrollWheelZoomingSensitivity = EditorGUILayout.FloatField("Scrollwheel sensitivity: ", camera.scrollWheelZoomingSensitivity);
-
+			if (camera.useScrollwheelZooming) {
+				camera.scrollWheelZoomingSensitivity = EditorGUILayout.FloatField("Scrollwheel sensitivity: ", camera.scrollWheelZoomingSensitivity);
+				camera.invertScrollDirection = EditorGUILayout.Toggle("Inverted scrollwheel:", camera.invertScrollDirection);
+			}
             if (camera.useScrollwheelZooming || camera.useKeyboardZooming)
             {
                 using (new HorizontalBlock())

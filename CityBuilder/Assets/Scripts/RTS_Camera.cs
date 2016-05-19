@@ -1,11 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/*
+ Base scripts from asset RTS camera:
+ 	D. Sylkin. RTS camera (RTS camera), Version 1.0,  [Online]. Available: https://www.assetstore.unity3d.com/en/#!/content/43321.
+ Modified by:
+ 	Francis Charette Migneault
+*/
 namespace RTS_Cam
 {
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu("RTS Camera")]
-    public class RTS_Camera : MonoBehaviour
+	public class RTS_Camera : MonoBehaviour
     {
 
         #region Foldouts
@@ -98,6 +104,7 @@ namespace RTS_Cam
         public KeyCode zoomOutKey = KeyCode.Q;
 
         public bool useScrollwheelZooming = true;
+		public bool invertScrollDirection = false;
         public string zoomingAxis = "Mouse ScrollWheel";
 
         public bool useKeyboardRotation = true;
@@ -257,8 +264,8 @@ namespace RTS_Cam
         private void HeightCalculation()
         {
             float distanceToGround = DistanceToGround();
-            if(useScrollwheelZooming)
-                zoomPos += ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity;
+			if(useScrollwheelZooming)				
+				zoomPos += ScrollWheel * Time.deltaTime * scrollWheelZoomingSensitivity * (invertScrollDirection ? 1 : -1);			
             if (useKeyboardZooming)
                 zoomPos += ZoomDirection * Time.deltaTime * keyboardZoomingSensitivity;
 

@@ -42,6 +42,7 @@ namespace RTS_Cam
         public float rotationSpeed = 3f;
         public float panningSpeed = 10f;
         public float mouseRotationSpeed = 10f;
+		GameObject rotate;
 
         #endregion
 
@@ -109,7 +110,6 @@ namespace RTS_Cam
         public KeyCode rotateLeftKey = KeyCode.Z;
 
         public bool useMouseRotation = true;
-		//public bool lockVerticalRotation = false;
         public KeyCode mouseRotationKey = KeyCode.Mouse1;
 
         private Vector2 KeyboardInput
@@ -173,6 +173,7 @@ namespace RTS_Cam
         private void Start()
         {
 			scrolling = new GameObject();
+			rotate = new GameObject();
         }
 
         private void Update()
@@ -289,9 +290,8 @@ namespace RTS_Cam
                 transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSpeed, Space.World);			
 
 			if (useMouseRotation && Input.GetKey(mouseRotationKey)) {
-				// Movement only along horizontal (locked vertical)
-				//if (lockVerticalRotation)
-					transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+				// Movement only along horizontal axis (locked vertical)
+				transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
 			}
         }
 

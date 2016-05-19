@@ -48,6 +48,7 @@
      <Compile Include="Assets\BaseScene\BaseScene.cs" />
      <Compile Include="Assets\BaseScene\TargetSelector.cs" />
      <Compile Include="Assets\Scripts\ApplyTerrainBorderLimits.cs" />
+     <Compile Include="Assets\Scripts\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\RTS_Camera.cs" />
      <None Include="Assets\BaseScene\Projectors\Guidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorLight.shader" />

@@ -39,7 +39,7 @@ namespace RTS_Cam
         public float keyboardMovementSpeed = 5f; 			//speed with keyboard movement
         public float screenEdgeMovementSpeed = 3f; 			//spee with screen edge movement
         public float followingSpeed = 5f; 					//speed when following a target
-        public float rotationSped = 3f;
+        public float rotationSpeed = 3f;
         public float panningSpeed = 10f;
         public float mouseRotationSpeed = 10f;
 
@@ -286,7 +286,7 @@ namespace RTS_Cam
         private void Rotation()
         {
 			if(useKeyboardRotation)
-                transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSped, Space.World);			
+                transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSpeed, Space.World);			
 
 			if (useMouseRotation && Input.GetKey(mouseRotationKey)) {
 				// Movement only along horizontal (locked vertical)

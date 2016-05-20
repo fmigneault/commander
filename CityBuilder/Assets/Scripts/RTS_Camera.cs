@@ -42,7 +42,6 @@ namespace RTS_Cam
         public float rotationSpeed = 3f;
         public float panningSpeed = 10f;
         public float mouseRotationSpeed = 10f;
-		GameObject rotate;
 
         #endregion
 
@@ -58,7 +57,7 @@ namespace RTS_Cam
         public float scrollWheelZoomingSensitivity = 25f;
 
         private float zoomPos = 0; 							//value in range (0, 1) used as t in Matf.Lerp
-		GameObject scrolling;
+		private GameObject scrolling;
 
         #endregion
 
@@ -173,7 +172,6 @@ namespace RTS_Cam
         private void Start()
         {
 			scrolling = new GameObject();
-			rotate = new GameObject();
         }
 
         private void Update()

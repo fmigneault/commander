@@ -49,6 +49,7 @@
      <Compile Include="Assets\Scripts\Editor\RTS_CameraEditor.cs" />
      <None Include="Assets\BaseScene\Projectors\Guidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorLight.shader" />
+     <None Include="Assets\WarZone\Vehicles\Car\CarGuidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorMultiply.shader" />
  <Reference Include="UnityEditor.Advertisements">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/Advertisements/Editor/UnityEditor.Advertisements.dll</HintPath>

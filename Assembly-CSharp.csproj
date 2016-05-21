@@ -50,8 +50,20 @@
      <Compile Include="Assets\Scripts\ApplyTerrainBorderLimits.cs" />
      <Compile Include="Assets\Scripts\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\RTS_Camera.cs" />
+     <Compile Include="Assets\WarZone\CrossPlatformInput\Scripts\CrossPlatformInputManager.cs" />
+     <Compile Include="Assets\WarZone\CrossPlatformInput\Scripts\PlatformSpecific\MobileInput.cs" />
+     <Compile Include="Assets\WarZone\CrossPlatformInput\Scripts\PlatformSpecific\StandaloneInput.cs" />
+     <Compile Include="Assets\WarZone\CrossPlatformInput\Scripts\VirtualInput.cs" />
+     <Compile Include="Assets\WarZone\Scripts\DestroyObject.cs" />
+     <Compile Include="Assets\WarZone\Scripts\GunController.cs" />
+     <Compile Include="Assets\WarZone\Scripts\TurretController.cs" />
+     <Compile Include="Assets\WarZone\Vehicles\Car\Scripts\CarAudio.cs" />
+     <Compile Include="Assets\WarZone\Vehicles\Car\Scripts\CarController.cs" />
+     <Compile Include="Assets\WarZone\Vehicles\Car\Scripts\CarUserControl.cs" />
+     <Compile Include="Assets\WarZone\Vehicles\Car\Scripts\WheelEffects.cs" />
      <None Include="Assets\BaseScene\Projectors\Guidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorLight.shader" />
+     <None Include="Assets\WarZone\Vehicles\Car\CarGuidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorMultiply.shader" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>

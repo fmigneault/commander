@@ -1,9 +1,10 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Units\TankManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\$DSNA.shader">
     <Files>
+      <File FileName="Assets\Scripts\Units\UnitManager.cs" Line="6" Column="15" />
       <File FileName="Assets\Scripts\Units\TankManager.cs" Line="12" Column="83" />
-      <File FileName="Assets\Scripts\Units\CombatUnitManager.cs" Line="1" Column="1" />
+      <File FileName="Assets\$DSNA.shader" Line="86" Column="48" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

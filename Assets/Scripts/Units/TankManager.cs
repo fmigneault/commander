@@ -10,6 +10,8 @@ namespace Units
 		public GameObject CannonBarrel;		// Reference to barrel section of the tank (shooting)
 		public float CannonRotateSpeed;		// Cannon rotation speed in deg/s
 		public float CannonAttackRange;		// Minimum distance required to allow attacking
+		public string Name = "";			// Tank general name
+		public string Code = "";			// Tank code name/number
 
 		void Awake ()
 		{

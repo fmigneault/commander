@@ -49,6 +49,7 @@
      <Compile Include="Assets\Scripts\Camera\ApplyTerrainBorderLimits.cs" />
      <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
      <Compile Include="Assets\Scripts\Camera\TargetSelector.cs" />
+     <Compile Include="Assets\Scripts\UI\AttackDebugButtons.cs" />
      <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\Units\TankManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitManager.cs" />

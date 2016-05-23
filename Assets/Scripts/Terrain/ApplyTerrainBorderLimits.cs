@@ -3,23 +3,19 @@ using System.Collections;
 using RTS_Cam;
 
 [RequireComponent(typeof(RTS_Camera))]
-public class ApplyTerrainBorderLimits : MonoBehaviour {
-
+public class ApplyTerrainBorderLimits : MonoBehaviour 
+{
 	public GameObject terrain;
 	private RTS_Camera RTScamera;
 
-	// Use this for initialization
-	void Start () {
+	void Start () 
+	{
 		RTScamera = gameObject.GetComponent<RTS_Camera>();	
 
 		// Camera limit set with ±limitX / limitY, so scaling has to be divided by 2
 		// Also, camera is moving in XY with Z downward, but terrain is oriented as XZ plane with Y upward
-		RTScamera.limitX = terrain.transform.localScale.x / 2;
-		RTScamera.limitY = terrain.transform.localScale.z / 2;
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+		Terrain t = terrain.GetComponent<Terrain>();
+		RTScamera.limitX = t.terrainData.size.x / 2;
+		RTScamera.limitY = t.terrainData.size.z / 2;
 	}
 }

@@ -45,11 +45,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\BaseScene\BaseScene.cs" />
-     <Compile Include="Assets\BaseScene\TargetSelector.cs" />
-     <Compile Include="Assets\Scripts\ApplyTerrainBorderLimits.cs" />
-     <Compile Include="Assets\Scripts\DisplayDebugText.cs" />
-     <Compile Include="Assets\Scripts\RTS_Camera.cs" />
+     <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
+     <Compile Include="Assets\Scripts\Camera\ApplyTerrainBorderLimits.cs" />
+     <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
+     <Compile Include="Assets\Scripts\Camera\TargetSelector.cs" />
+     <Compile Include="Assets\Scripts\UI\AttackDebugButtons.cs" />
+     <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
+     <Compile Include="Assets\Scripts\Units\TankManager.cs" />
+     <Compile Include="Assets\Scripts\Units\UnitManager.cs" />
      <None Include="Assets\BaseScene\Projectors\Guidelines.txt" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorLight.shader" />
      <None Include="Assets\BaseScene\Projectors\Shaders\ProjectorMultiply.shader" />

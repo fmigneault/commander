@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class CenterTerrain : MonoBehaviour 
-{
+{	
 	void Awake ()
 	{
 		Terrain t = GetComponent<Terrain>();

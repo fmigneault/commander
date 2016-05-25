@@ -23,7 +23,7 @@ namespace Units
 			unitManager = GetComponent<Units.UnitManager>();
 			barrelRotationDelta = BarrelRotateSpeed * Time.deltaTime;
 		}
-		
+
 
 		void Update ()
 		{				

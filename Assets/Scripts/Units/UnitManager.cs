@@ -7,6 +7,7 @@ namespace Units
 	{
 		// General parameters
 		public string Name = "";
+		public string Code = "";
 		public bool isGroundUnit = false;
 		public bool isAirUnit = false;
 

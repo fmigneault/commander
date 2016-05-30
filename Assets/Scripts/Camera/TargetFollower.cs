@@ -3,7 +3,7 @@ using System.Collections;
 using RTS_Cam;
 
 [RequireComponent(typeof(RTS_Camera))]
-public class TargetSelector : MonoBehaviour 
+public class TargetFollower : MonoBehaviour 
 {
     private RTS_Camera cam;
     private new Camera camera;

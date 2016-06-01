@@ -13,7 +13,6 @@ namespace Units
 		public float BarrelRotateSpeed;		// Upward rotation speed in deg/s (zero if cannot rotate barrel up/down)
 		public bool BarrelLockOnTarget;		// Specify if the barrel needs to aim at the target to attack
 		public float BarrelAttackAngle;		// Required angle of barrel to attack
-		public string Code = "";			// Tank code name/number
 
 		private Units.UnitManager unitManager;
 		private float barrelRotationDelta;

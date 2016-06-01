@@ -47,7 +47,7 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
      <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
-     <Compile Include="Assets\Scripts\Camera\TargetSelector.cs" />
+     <Compile Include="Assets\Scripts\Camera\TargetFollower.cs" />
      <Compile Include="Assets\Scripts\Terrain\ApplyTerrainBorderLimits.cs" />
      <Compile Include="Assets\Scripts\Terrain\CenterTerrain.cs" />
      <Compile Include="Assets\Scripts\Terrain\TextureRenderer.cs" />
@@ -55,6 +55,7 @@
      <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\Units\TankManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitManager.cs" />
+     <Compile Include="Assets\Scripts\Units\UnitSelector.cs" />
      <None Include="Assets\Lights\Shaders\ProjectorLight.shader" />
      <None Include="Assets\Lights\Shaders\ProjectorMultiply.shader" />
  <Reference Include="UnityEngine.UI">

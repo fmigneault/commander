@@ -149,7 +149,7 @@ namespace RTS_Cam
         }
 
         private int RotationDirection
-        {
+        {			
             get
             {
                 bool rotateRight = Input.GetKey(rotateRightKey);

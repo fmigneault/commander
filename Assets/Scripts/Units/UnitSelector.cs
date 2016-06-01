@@ -76,7 +76,7 @@ namespace Units
 							}
 
 							// Update unit selection
-							SetUnitHighlight(unit);
+							SetUnitHighlightState(unit, true);
 							selectedUnits.Add(unit);
 							anySelected = (selectedUnits.Count > 0);
 
@@ -103,7 +103,7 @@ namespace Units
 		{
 			foreach (var unit in selectedUnits)
 			{
-				ResetUnitHighlight(unit);
+				SetUnitHighlightState(unit, false);
 			}
 			selectedUnits.Clear();
 		}
@@ -112,19 +112,20 @@ namespace Units
 		private void UnselectSingleUnit(GameObject unit) 
 		{			
 			selectedUnits.Remove(unit);
-			ResetUnitHighlight(unit);
+			SetUnitHighlightState(unit, false);
 		}
 
 
-		private void SetUnitHighlight(GameObject unit) 
+		private void SetUnitHighlightState(GameObject unit, bool state) 
 		{
-
-		}
-
-
-		private void ResetUnitHighlight(GameObject unit) 
-		{
-
+			if (unit != null)
+			{
+				UnitManager unitManager = unit.GetComponent<UnitManager>();
+				if (unitManager != null)
+				{
+					unitManager.SelectionHighlightState = state;
+				}
+			}
 		}
 
 

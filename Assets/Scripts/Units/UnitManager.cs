@@ -8,6 +8,7 @@ namespace Units
 		// General parameters
 		public string Name = "";
 		public string Code = "";
+		public Color FactionColor = Color.white;
 		public bool isGroundUnit = false;
 		public bool isAirUnit = false;
 
@@ -21,6 +22,15 @@ namespace Units
 		public float MinAttackRange = 0;
 		public float MaxAttackRange = 0;
 
+		// Selected unit highlight on ground reference
+		public GameObject SelectionSprite = null;
+
+
+		void Start ()
+		{
+			InitializeSelectionHighlight();
+		}
+				
 
 		public void Attack(GameObject target)
 		{
@@ -47,6 +57,13 @@ namespace Units
 		}
 
 
+		public bool SelectionHighlightState
+		{
+			get { return SelectionSprite == null ? false : SelectionSprite.activeSelf; }
+			set { if (SelectionSprite != null) SelectionSprite.SetActive(value); }
+		}
+
+
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
 		{
 			return ((targetUnitManager.isAirUnit && this.CanAttackAir) || (targetUnitManager.isGroundUnit && this.CanAttackGround));
@@ -68,6 +85,13 @@ namespace Units
 			{
 				this.GetComponent<TankManager>().AimingTarget = target;
 			}
+		}
+
+
+		private void InitializeSelectionHighlight()
+		{
+			SelectionSprite.GetComponent<SpriteRenderer>().color = FactionColor;
+			SelectionHighlightState = false;
 		}
 	}
 }

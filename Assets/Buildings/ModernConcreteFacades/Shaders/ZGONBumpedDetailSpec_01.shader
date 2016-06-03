@@ -37,7 +37,7 @@ Shader "ZGON : Bumped Detail Spec 01" {
 		CGPROGRAM
 		#pragma surface surf BlinnPhong
 		#pragma target 3.0
-		#include "ZGONShaderOps.cginc"
+		#include "./ZGONShaderOps.cginc"
 
 		sampler2D _MainTex;
 		sampler2D _BumpMap;

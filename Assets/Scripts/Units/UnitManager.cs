@@ -12,6 +12,9 @@ namespace Units
 		public bool isGroundUnit = false;
 		public bool isAirUnit = false;
 
+		// Unit production parameters
+		public float ProductionDelay = 0; 
+
 		// Movement parameters
 		public float MovingSpeed = 0;
 		public float RotationSpeed = 0;

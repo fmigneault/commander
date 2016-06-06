@@ -45,6 +45,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\Buildings\BuildingManager.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
      <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
      <Compile Include="Assets\Scripts\Camera\TargetFollower.cs" />
@@ -56,8 +57,12 @@
      <Compile Include="Assets\Scripts\Units\TankManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitSelector.cs" />
+     <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
+     <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
+     <None Include="Assets\Buildings\ModernConcreteFacades\Modern_ConcreteBuildingExt_01.xml" />
      <None Include="Assets\Lights\Shaders\ProjectorLight.shader" />
      <None Include="Assets\Lights\Shaders\ProjectorMultiply.shader" />
+     <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONShaderOps.cginc" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>

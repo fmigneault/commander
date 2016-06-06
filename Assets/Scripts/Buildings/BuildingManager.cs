@@ -61,7 +61,7 @@ namespace Buildings
 		}
 
 
-		public bool AddUnitToProductionQueue(GameObject unit) 
+		public bool AddUnitToProductionQueue(GameObject unit)
 		{
 			#region DEBUG
 			Debug.Log("START 'AddUnitToProductionQueue'");
@@ -72,10 +72,14 @@ namespace Buildings
 				if (ProductionQueue.Count < ProductionQueueSize)
 				{
 					#region DEBUG
-					Debug.Log("QUEUE 'AddUnitToProductionQueue'");
+					Debug.Log("PROD 'AddUnitToProductionQueue'");
 					#endregion
 
 					ProduceUnitAfterDelay(unit);
+					#region DEBUG
+					Debug.Log("AFTER 'AddUnitToProductionQueue'");
+					#endregion
+
 					return true;
 				}
 			}
@@ -83,7 +87,7 @@ namespace Buildings
 		}
 
 
-		private void ProduceUnitAfterDelay(GameObject unit, bool isCallBack=false)
+		private void ProduceUnitAfterDelay(GameObject unit=null, bool isCallback=false)
 		{
 			#region DEBUG
 			Debug.Log("START 'ProduceUnitAfterDelay'");
@@ -92,19 +96,18 @@ namespace Buildings
 			// Update production queue if a new unit has to be added
 			if (unit != null) ProductionQueue.Enqueue(unit);
 
-			// If a unit is already under production, return
-			// The function will manage the callback itself when previous units are produced
-			if (ProductionQueue.Count > 1 && !isCallBack) return;
+			// If a unit is already under production or all units have been produced, return
+			// Function 'ProduceCurrentUnit' manages the callback when the current unit finishes production
+			if ((ProductionQueue.Count > 1 && !isCallback) || ProductionQueue.Count == 0) return;
 
 			#region DEBUG
 			Debug.Log("BEFORE COROUTINE 'ProduceUnitAfterDelay'");
+			DisplayQueuedUnits();
+			Debug.Log("CHECK 'ProduceUnitAfterDelay'");
 			#endregion
 
-			// Start the current unit's production
-			StartCoroutine(ProduceCurrentUnit(unit));
-
-			// Start the next unit's production when the current is complete
-			ProduceUnitAfterDelay(null, true);
+			// Start production of the first unit in queue
+			StartCoroutine(ProduceCurrentUnit((GameObject)ProductionQueue.Peek()));		
 		}
 
 
@@ -116,12 +119,27 @@ namespace Buildings
 
 			// Wait for the unit's production delay before creating it
 			float delay = unit.GetComponent<UnitManager>().ProductionDelay;
-			CurrentDelay = delay;
-			yield return new WaitForSeconds(delay);
+			float timestampComplete = Time.time + delay;
+			while (Time.time < timestampComplete)
+			{
+				CurrentDelay = timestampComplete - Time.time;
+				yield return new WaitForSeconds(delay);
+			}
+
+			#region DEBUG
+			Debug.Log("DONE WAIT 'ProduceCurrentUnit'");
+			#endregion
 
 			// Create the unit when the delay expires
-			var producedUnit = ProductionQueue.Dequeue();
-			StartCoroutine(CreateProducedUnit((GameObject)producedUnit));
+			//    Use 'peek' to get current unit, only dequeue when unit is completely produced
+			//    This avoids a timing and a null reference problem that occured when adding a unit to the production 
+			//    queue while the current unit was removed from queue, while not having finished the production delay
+			var producedUnit = ProductionQueue.Peek();
+			yield return CreateProducedUnit((GameObject)producedUnit);
+			ProductionQueue.Dequeue();
+
+			// Callback to start the next unit's production if applicable
+			ProduceUnitAfterDelay(isCallback: true);
 		}
 
 
@@ -138,23 +156,43 @@ namespace Buildings
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);
 
 				#region DEBUG
+				Debug.Log("BEFORE CREATE");
+				#endregion
+
+				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
+
+				#region DEBUG
 				Debug.Log("UNIT CREATED");
 				#endregion
-				//Instantiate(unit);
+
+				// Move the unit from spawn position to exit position
+				yield return MoveCreatedUnitToExit(createdUnit);
+
+				#region DEBUG
+				Debug.Log("UNIT MOVED");
+				#endregion
 
 				// Wait for the door to close completely
 				CurrentDoorStatus = DoorStatus.CLOSING;
-				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);
+				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);						
+			}
+		}
+
+
+		private IEnumerator MoveCreatedUnitToExit(GameObject unit)
+		{
+			float movingSpeed = unit.GetComponent<UnitManager>().MovingSpeed;
+			while (unit.transform.position != ExitPosition.position)
+			{				
+				unit.transform.position = Vector3.MoveTowards(unit.transform.position, ExitPosition.position,
+															  movingSpeed * Time.deltaTime);
+				yield return null;
 			}
 		}
 			
 
-		public void UpdateDoorPosition()
+		private void UpdateDoorPosition()
 		{
-			#region DEBUG
-			Debug.Log("START 'UpdateDoorPosition'");
-			#endregion
-
 			Vector3 doorPosition = Door.transform.position;
 			switch (CurrentDoorStatus)
 			{
@@ -170,6 +208,10 @@ namespace Buildings
 					return;
 			}
 			Door.transform.position = doorPosition;
+
+			#region DEBUG
+			Debug.Log(string.Format("Door: {0} {1}", doorPosition, CurrentDoorStatus));
+			#endregion
 		}
 
 

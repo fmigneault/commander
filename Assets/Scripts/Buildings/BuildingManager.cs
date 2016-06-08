@@ -2,6 +2,7 @@
 #define OUTPUT_DEBUG
 
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using Units;
 
@@ -36,6 +37,9 @@ namespace Buildings
 		private readonly Queue ProductionQueue = new Queue(ProductionQueueSize);
 		private float CurrentDelay = 0f;
 
+		#if OUTPUT_DEBUG
+		public Text DebugLogText;
+		#endif
 
 		public void Start()
 		{
@@ -63,23 +67,11 @@ namespace Buildings
 
 		public bool AddUnitToProductionQueue(GameObject unit)
 		{
-			#region DEBUG
-			Debug.Log("START 'AddUnitToProductionQueue'");
-			#endregion
-
 			if (unit != null && unit.GetComponent<UnitManager>() != null)
 			{
 				if (ProductionQueue.Count < ProductionQueueSize)
 				{
-					#region DEBUG
-					Debug.Log("PROD 'AddUnitToProductionQueue'");
-					#endregion
-
 					ProduceUnitAfterDelay(unit);
-					#region DEBUG
-					Debug.Log("AFTER 'AddUnitToProductionQueue'");
-					#endregion
-
 					return true;
 				}
 			}
@@ -89,10 +81,6 @@ namespace Buildings
 
 		private void ProduceUnitAfterDelay(GameObject unit=null, bool isCallback=false)
 		{
-			#region DEBUG
-			Debug.Log("START 'ProduceUnitAfterDelay'");
-			#endregion
-
 			// Update production queue if a new unit has to be added
 			if (unit != null) ProductionQueue.Enqueue(unit);
 
@@ -100,11 +88,9 @@ namespace Buildings
 			// Function 'ProduceCurrentUnit' manages the callback when the current unit finishes production
 			if ((ProductionQueue.Count > 1 && !isCallback) || ProductionQueue.Count == 0) return;
 
-			#region DEBUG
-			Debug.Log("BEFORE COROUTINE 'ProduceUnitAfterDelay'");
+			#if OUTPUT_DEBUG
 			DisplayQueuedUnits();
-			Debug.Log("CHECK 'ProduceUnitAfterDelay'");
-			#endregion
+			#endif
 
 			// Start production of the first unit in queue
 			StartCoroutine(ProduceCurrentUnit((GameObject)ProductionQueue.Peek()));		
@@ -113,10 +99,6 @@ namespace Buildings
 
 		private IEnumerator ProduceCurrentUnit(GameObject unit)
 		{
-			#region DEBUG
-			Debug.Log("START 'ProduceCurrentUnit'");
-			#endregion
-
 			// Wait for the unit's production delay before creating it
 			float delay = unit.GetComponent<UnitManager>().ProductionDelay;
 			float timestampComplete = Time.time + delay;
@@ -125,10 +107,6 @@ namespace Buildings
 				CurrentDelay = timestampComplete - Time.time;
 				yield return new WaitForSeconds(delay);
 			}
-
-			#region DEBUG
-			Debug.Log("DONE WAIT 'ProduceCurrentUnit'");
-			#endregion
 
 			// Create the unit when the delay expires
 			//    Use 'peek' to get current unit, only dequeue when unit is completely produced
@@ -147,30 +125,13 @@ namespace Buildings
 		{			
 			if (Door != null)
 			{
-				#region DEBUG
-				Debug.Log("START 'CreateProducedUnit'");
-				#endregion
-
 				// Wait for the door to open completely
 				CurrentDoorStatus = DoorStatus.OPENING;
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);
 
-				#region DEBUG
-				Debug.Log("BEFORE CREATE");
-				#endregion
-
-				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
-
-				#region DEBUG
-				Debug.Log("UNIT CREATED");
-				#endregion
-
 				// Move the unit from spawn position to exit position
+				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
 				yield return MoveCreatedUnitToExit(createdUnit);
-
-				#region DEBUG
-				Debug.Log("UNIT MOVED");
-				#endregion
 
 				// Wait for the door to close completely
 				CurrentDoorStatus = DoorStatus.CLOSING;
@@ -209,9 +170,11 @@ namespace Buildings
 			}
 			Door.transform.position = doorPosition;
 
-			#region DEBUG
-			Debug.Log(string.Format("Door: {0} {1}", doorPosition, CurrentDoorStatus));
-			#endregion
+			#if OUTPUT_DEBUG
+			string debug = string.Format("Door: {0} {1}", doorPosition, CurrentDoorStatus);
+			Debug.Log(debug);
+			if (DebugLogText != null) DebugLogText.text = debug;
+			#endif
 		}
 
 
@@ -225,6 +188,7 @@ namespace Buildings
 				{
 					queueInfo += string.Format("<END> | RemainTime: {0}", CurrentDelay);
 					Debug.Log(queueInfo);
+					if (DebugLogText != null) DebugLogText.text = queueInfo;
 					return;
 				}
 				var unit = (GameObject)(ProductionQueue.ToArray()[i]);

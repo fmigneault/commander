@@ -5,29 +5,39 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using RTS_Cam;
+using Units;
 
-namespace Units
+namespace RTS_Cam
 {
 	[RequireComponent(typeof(RTS_Camera))]
-	public class UnitSelector : MonoBehaviour 
+	public class SelectorManager : MonoBehaviour 
 	{
-		public string[] SelectTags;		// Tags of GameObjects which unit selection is permitted
-		public string[] AttackTags;		// Tags of GameObjects which unit attack command is permitted
+		public string[] SelectTags;			// Tags of GameObjects which selection is permitted
+		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
+		public string ConstructionTag;		// Tag of GameObjects which are construction units
+		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
+
+		// GUI
+		public GameObject UnitIconPanel;
+		public GameObject BuildingIconPanel;
 
 		// Key mappings
-		public KeyCode multipleSelectKey = KeyCode.LeftControl;
-		public KeyCode unitSelectionKey = KeyCode.Mouse0;
-		public KeyCode unitAttackMoveKey = KeyCode.Mouse1;
+		public KeyCode MultipleSelectKey = KeyCode.LeftControl;
+		public KeyCode UnitSelectionKey = KeyCode.Mouse0;
+		public KeyCode UnitAttackMoveKey = KeyCode.Mouse1;
 
 		private float maxDistance;
 		private Camera cam;
-		List<GameObject> selectedUnits;
+		List<GameObject> selectedObjects;
+
 
 		void Start ()
 		{
 			cam = gameObject.GetComponent<RTS_Camera>().GetComponent<Camera>();
 			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
-			selectedUnits = new List<GameObject>();
+			selectedObjects = new List<GameObject>();
+			ChangeIconListVisibility(BuildingIconPanel, false);
+			ChangeIconListVisibility(UnitIconPanel, false);
 		}
 		
 
@@ -35,11 +45,11 @@ namespace Units
 		{			
 			Vector3 mousePosition = Input.mousePosition;
 
-			if (Input.GetKeyUp(unitSelectionKey))
+			if (Input.GetKeyUp(UnitSelectionKey))
 			{								
-				SelectUnits(mousePosition, Input.GetKey(multipleSelectKey));
+				SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
 			}
-			else if (Input.GetKeyUp(unitAttackMoveKey))
+			else if (Input.GetKeyUp(UnitAttackMoveKey))
 			{
 				bool attaking = AttackUnit(mousePosition);
 				if (!attaking) MoveUnit(mousePosition);
@@ -47,7 +57,7 @@ namespace Units
 		}
 
 
-		private void SelectUnits(Vector3 mousePosition, bool multipleSelect=false)
+		private void SelectObjects(Vector3 mousePosition, bool multipleSelect=false)
 		{
 			if (SelectTags != null)
 			{		
@@ -63,28 +73,51 @@ namespace Units
 						if (hit.transform.CompareTag(tag) && hit.collider != null)
 						{	
 							// Get newly pointed unit selection
-							GameObject unit = hit.collider.gameObject;
+							GameObject obj = hit.collider.gameObject;
+
+							#if OUTPUT_DEBUG
+							#region DEBUG
+							Debug.Log(obj.tag);
+							#endregion
+							#endif
+
+							// If the selected object is a building, unselect units
+							if (obj.tag == BuildingTag)
+							{
+								UnSelectAllUnits();
+								ChangeIconListVisibility(UnitIconPanel, true);
+								return;
+							}
+							else
+							{
+								ChangeIconListVisibility(UnitIconPanel, false);
+							}
 
 							// If not using multiple selection, un-select previously selected units
 							if (!multipleSelect) UnSelectAllUnits();						
 
 							// If using multiple selection, un-select already selected unit
-							if (multipleSelect && selectedUnits.Contains(unit))
+							if (multipleSelect && selectedObjects.Contains(obj))
 							{
-								UnselectSingleUnit(unit);
+								UnselectSingleUnit(obj);
 								return;
 							}
 
 							// Update unit selection
-							SetUnitHighlightState(unit, true);
-							selectedUnits.Add(unit);
-							anySelected = (selectedUnits.Count > 0);
+							SetUnitHighlightState(obj, true);
+							selectedObjects.Add(obj);
+							anySelected = (selectedObjects.Count > 0);
+
+							// Update GUI building icons, display if only one "construction" unit is selected
+							bool displayBuildings = (selectedObjects.Count == 1 && 
+													 selectedObjects.ToArray()[0].tag == ConstructionTag);
+							ChangeIconListVisibility(BuildingIconPanel, displayBuildings);
 
 							#if OUTPUT_DEBUG
 							#region DEBUG
-							if (unit != null && unit.GetComponent<UnitManager>() != null) 
+							if (obj != null && obj.GetComponent<UnitManager>() != null) 
 							{
-								string hitName = unit.GetComponent<UnitManager>().Name;
+								string hitName = obj.GetComponent<UnitManager>().Name;
 								Debug.Log(string.Format("Selected: {0}, {1}", tag, hitName));
 							}
 							#endregion
@@ -101,17 +134,18 @@ namespace Units
 	
 		private void UnSelectAllUnits()
 		{
-			foreach (var unit in selectedUnits)
+			foreach (var unit in selectedObjects)
 			{
 				SetUnitHighlightState(unit, false);
 			}
-			selectedUnits.Clear();
+			selectedObjects.Clear();
+			ChangeIconListVisibility(BuildingIconPanel, false);
 		}
 
 
 		private void UnselectSingleUnit(GameObject unit) 
 		{			
-			selectedUnits.Remove(unit);
+			selectedObjects.Remove(unit);
 			SetUnitHighlightState(unit, false);
 		}
 
@@ -129,9 +163,20 @@ namespace Units
 		}
 
 
+		private static void ChangeIconListVisibility(GameObject panel, bool visible)
+		{
+			if (panel != null)
+			{
+				CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+				cg.alpha = visible ? 1 : 0;
+				cg.interactable = visible;
+			}
+		}
+
+
 		private bool AttackUnit(Vector3 mousePosition) 
 		{
-			if (AttackTags != null && selectedUnits.Count != 0)
+			if (AttackTags != null && selectedObjects.Count != 0)
 			{			
 				// Draw ray from camera toward pointed position, execute command only on hit (any tag)	
 				Ray ray = cam.ScreenPointToRay(mousePosition);
@@ -146,7 +191,7 @@ namespace Units
 						{			
 							// Apply newly pointed unit as target of already selected units
 							GameObject target = hit.collider.gameObject;
-							foreach (var unit in selectedUnits)
+							foreach (var unit in selectedObjects)
 							{
 								// Ask for the attack command if the selected/attacked units are not the same (cannot attack itself)
 								if (target != unit) unit.GetComponent<UnitManager>().Attack(target);
@@ -169,7 +214,7 @@ namespace Units
 					// If no unit was hit for an attack, cancel any existing attack command by removing the target reference
 					if (!anyAttacked)
 					{
-						foreach (var unit in selectedUnits)
+						foreach (var unit in selectedObjects)
 						{
 							unit.GetComponent<UnitManager>().Attack(null);
 						}

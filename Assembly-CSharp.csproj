@@ -48,15 +48,16 @@
      <Compile Include="Assets\Scripts\Buildings\BuildingManager.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
      <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
+     <Compile Include="Assets\Scripts\Camera\SelectorManager.cs" />
      <Compile Include="Assets\Scripts\Camera\TargetFollower.cs" />
      <Compile Include="Assets\Scripts\Terrain\ApplyTerrainBorderLimits.cs" />
      <Compile Include="Assets\Scripts\Terrain\CenterTerrain.cs" />
      <Compile Include="Assets\Scripts\Terrain\TextureRenderer.cs" />
      <Compile Include="Assets\Scripts\UI\AttackDebugButtons.cs" />
      <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
+     <Compile Include="Assets\Scripts\UI\IconManager.cs" />
      <Compile Include="Assets\Scripts\Units\TankManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitManager.cs" />
-     <Compile Include="Assets\Scripts\Units\UnitSelector.cs" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Modern_ConcreteBuildingExt_01.xml" />

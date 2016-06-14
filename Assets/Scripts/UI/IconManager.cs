@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class IconManager : MonoBehaviour 
+namespace UI
 {
-	public GameObject DisplayedObject;
+	public class IconManager : MonoBehaviour 
+	{
+		public Texture Icon;
+	}
 }

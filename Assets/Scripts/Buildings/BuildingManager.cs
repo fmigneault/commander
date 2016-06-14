@@ -4,6 +4,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using Units;
 
 namespace Buildings
@@ -33,6 +34,7 @@ namespace Buildings
 		private Vector3 DoorClosedPosition;
 
 		// Parameters for unit production queue
+		public List<GameObject> ProducedUnits;
 		private const int ProductionQueueSize = 10;
 		private readonly Queue ProductionQueue = new Queue(ProductionQueueSize);
 		private float CurrentDelay = 0f;

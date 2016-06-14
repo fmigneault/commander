@@ -2,10 +2,15 @@
 #define OUTPUT_DEBUG
 
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+
+using Buildings;
 using RTS_Cam;
 using Units;
+using UI;
 
 namespace RTS_Cam
 {
@@ -17,9 +22,8 @@ namespace RTS_Cam
 		public string ConstructionTag;		// Tag of GameObjects which are construction units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
 
-		// GUI
-		public GameObject UnitIconPanel;
-		public GameObject BuildingIconPanel;
+		// GUI Icon Panel
+		public GameObject IconPanel;
 
 		// Key mappings
 		public KeyCode MultipleSelectKey = KeyCode.LeftControl;
@@ -36,8 +40,7 @@ namespace RTS_Cam
 			cam = gameObject.GetComponent<RTS_Camera>().GetComponent<Camera>();
 			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
 			selectedObjects = new List<GameObject>();
-			ChangeIconListVisibility(BuildingIconPanel, false);
-			ChangeIconListVisibility(UnitIconPanel, false);
+			ChangeIconPanelVisibility(IconPanel, false);
 		}
 		
 
@@ -81,16 +84,18 @@ namespace RTS_Cam
 							#endregion
 							#endif
 
-							// If the selected object is a building, unselect units
+							// If the selected object is a building, unselect units and display icons of produced units
 							if (obj.tag == BuildingTag)
 							{
 								UnSelectAllUnits();
-								ChangeIconListVisibility(UnitIconPanel, true);
+								var iconList = obj.GetComponent<BuildingManager>().ProducedUnits;
+								PopulateIconPanel(IconPanel, iconList);
+								ChangeIconPanelVisibility(IconPanel, true);
 								return;
 							}
 							else
 							{
-								ChangeIconListVisibility(UnitIconPanel, false);
+								ChangeIconPanelVisibility(IconPanel, false);
 							}
 
 							// If not using multiple selection, un-select previously selected units
@@ -111,7 +116,12 @@ namespace RTS_Cam
 							// Update GUI building icons, display if only one "construction" unit is selected
 							bool displayBuildings = (selectedObjects.Count == 1 && 
 													 selectedObjects.ToArray()[0].tag == ConstructionTag);
-							ChangeIconListVisibility(BuildingIconPanel, displayBuildings);
+							if (displayBuildings)
+							{								
+								var iconList = obj.GetComponent<UnitManager>().ProducedBuildings;
+								PopulateIconPanel(IconPanel, iconList);
+								ChangeIconPanelVisibility(IconPanel, displayBuildings);
+							}
 
 							#if OUTPUT_DEBUG
 							#region DEBUG
@@ -139,7 +149,7 @@ namespace RTS_Cam
 				SetUnitHighlightState(unit, false);
 			}
 			selectedObjects.Clear();
-			ChangeIconListVisibility(BuildingIconPanel, false);
+			ChangeIconPanelVisibility(IconPanel, false);
 		}
 
 
@@ -163,13 +173,36 @@ namespace RTS_Cam
 		}
 
 
-		private static void ChangeIconListVisibility(GameObject panel, bool visible)
+		private static void ChangeIconPanelVisibility(GameObject panel, bool visible)
 		{
 			if (panel != null)
 			{
-				CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+				var cg = panel.GetComponent<CanvasGroup>();
 				cg.alpha = visible ? 1 : 0;
 				cg.interactable = visible;
+			}
+		}
+
+
+		public static void PopulateIconPanel(GameObject panel, List<GameObject> objectsWithIcon)
+		{
+			if (panel != null && objectsWithIcon != null)
+			{
+				var icons = panel.GetComponentsInChildren<RawImage>();
+				for (int i = 0; i < icons.Length; i++)
+				{					
+					if (i < objectsWithIcon.Count)
+					{
+						var obj = objectsWithIcon.ToArray()[i];
+						var iman = obj.GetComponent<IconManager>();
+						icons[i].texture = iman.Icon;
+						icons[i].enabled = true;
+					}
+					else
+					{	
+						icons[i].enabled = false;
+					}
+				}
 			}
 		}
 

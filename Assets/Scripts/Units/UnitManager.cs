@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace Units
 {
@@ -28,6 +28,8 @@ namespace Units
 		// Selected unit highlight on ground reference
 		public GameObject SelectionSprite = null;
 
+		// Parameters for building construction (only if "construction" unit)
+		public List<GameObject> ProducedBuildings = null;
 
 		void Start ()
 		{
@@ -62,7 +64,7 @@ namespace Units
 
 		public bool SelectionHighlightState
 		{
-			get { return SelectionSprite == null ? false : SelectionSprite.activeSelf; }
+			get { return SelectionSprite != null && SelectionSprite.activeSelf; }
 			set { if (SelectionSprite != null) SelectionSprite.SetActive(value); }
 		}
 

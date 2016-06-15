@@ -21,6 +21,7 @@ namespace RTS_Cam
 		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
 		public string ConstructionTag;		// Tag of GameObjects which are construction units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
+		public string ButtonTag;			// Tag of GameObjects corresponding to buttons
 
 		// GUI Icon Panel
 		public GameObject IconPanel;
@@ -49,7 +50,7 @@ namespace RTS_Cam
 			Vector3 mousePosition = Input.mousePosition;
 
 			if (Input.GetKeyUp(UnitSelectionKey))
-			{								
+			{
 				SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
 			}
 			else if (Input.GetKeyUp(UnitAttackMoveKey))
@@ -82,7 +83,7 @@ namespace RTS_Cam
 							#region DEBUG
 							Debug.Log(obj.tag);
 							#endregion
-							#endif
+							#endif						
 
 							// If the selected object is a building, unselect units and display icons of produced units
 							if (obj.tag == BuildingTag)
@@ -188,19 +189,24 @@ namespace RTS_Cam
 		{
 			if (panel != null && objectsWithIcon != null)
 			{
-				var icons = panel.GetComponentsInChildren<RawImage>();
-				for (int i = 0; i < icons.Length; i++)
+				var btns = panel.GetComponentsInChildren<Button>();
+				for (int i = 0; i < btns.Length; i++)
 				{					
 					if (i < objectsWithIcon.Count)
 					{
+						// Set the button image, display it and associate the object link
 						var obj = objectsWithIcon.ToArray()[i];
-						var iman = obj.GetComponent<IconManager>();
-						icons[i].texture = iman.Icon;
-						icons[i].enabled = true;
+						var imgman = obj.GetComponent<IconManager>();
+						btns[i].image.overrideSprite = imgman.Icon;
+						btns[i].enabled = true;
+						btns[i].image.color = Color.white;
 					}
 					else
 					{	
-						icons[i].enabled = false;
+						// Revert button image to default and hide it
+						btns[i].image.overrideSprite = null;
+						btns[i].enabled = false;
+						btns[i].image.color = Color.clear;
 					}
 				}
 			}

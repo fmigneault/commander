@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 namespace UI
 {
 	public class IconManager : MonoBehaviour 
 	{
-		public Texture Icon;
+		public Sprite Icon = null;
 	}
 }

@@ -70,7 +70,12 @@ namespace RTS_Cam
 			// Update button clicked flag from external OnClick event (button must link to this function)
 			//   If a button clicked event was used to call this function with it's corresponding object as parameter,
 			//	 then enable the flag. Otherwise, disable the flag.
-			buttonClickedFlag = (buttonCliked != null);
+			buttonClickedFlag = (IconPanel != null && buttonCliked != null);
+			if (!buttonCliked) return;
+
+			// Find the clicked button index
+			var btns = IconPanel.GetComponentsInChildren<Button>();
+			int idx = btns.ToList().IndexOf(buttonCliked);
 
 			#if OUTPUT_DEBUG
 			#region DEBUG
@@ -82,11 +87,15 @@ namespace RTS_Cam
 			// (clickable displayed icon in the panel would therefore be available units to produce with this building)
 			if (selectedBuilding != null)
 			{
-				// Find the clicked button index
-				var btns = IconPanel.GetComponentsInChildren<Button>();
-				int idx = btns.ToList().IndexOf(buttonCliked);
 				var buildingManager = selectedBuilding.GetComponent<BuildingManager>();
 				buildingManager.AddUnitToProductionQueue(buildingManager.ProducedUnits[idx]);
+			}
+			// Generate a new instance of the corresponding building if a construction unit was selected
+			else if (selectedUnits.Count == 1 && selectedUnits.First().tag == ConstructionTag)
+			{
+				var unitManager = selectedUnits.First().GetComponent<UnitManager>();
+				var newBuilding = unitManager.ProducedBuildings[idx];
+				newBuilding.GetComponent<BuildingPlacementManager>().PlaceNewBuilding();
 			}
 		}
 
@@ -175,7 +184,7 @@ namespace RTS_Cam
 
 		private bool AttackUnit(GameObject hitObject) 
 		{
-			if (AttackTags != null && selectedUnits.Count != 0)
+            if (hitObject != null && AttackTags != null && selectedUnits.Count != 0)
 			{			
 				// Get newly pointed unit selection
 				#if OUTPUT_DEBUG

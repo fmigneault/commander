@@ -170,7 +170,7 @@ namespace RTS_Cam
         #region Unity_Methods
 
         private void Start()
-        {
+        {            
 			scrolling = new GameObject();
         }
 

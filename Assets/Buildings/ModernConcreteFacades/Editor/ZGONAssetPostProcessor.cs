@@ -211,6 +211,7 @@ class ZGONAssetPostProcessor : AssetPostprocessor
 				colorValue.r = Convert.ToSingle(currentNode.Attributes.GetNamedItem("r").Value);
 				colorValue.g = Convert.ToSingle(currentNode.Attributes.GetNamedItem("g").Value);
 				colorValue.b = Convert.ToSingle(currentNode.Attributes.GetNamedItem("b").Value);
+                colorValue.a = Convert.ToSingle(currentNode.Attributes.GetNamedItem("a").Value);
 				meshProp.Value = colorValue;
 				_meshProps.Add(meshProp);
 			}

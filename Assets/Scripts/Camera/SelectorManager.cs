@@ -126,7 +126,8 @@ namespace RTS_Cam
 				{								
 					// If the selected object is a building, unselect units and display icons of produced units
 					if (objectHit.tag == BuildingTag)
-					{						
+					{		
+                        UnselectBuilding();             // Disable selection of possible previously selected building
 						selectedBuilding = objectHit;   // Update currently selected building
 
                         // Display creatable units by the building only if it is not currently being placed 
@@ -145,7 +146,7 @@ namespace RTS_Cam
 					}
 					else
 					{
-                        UnselectBuilding(selectedBuilding);
+                        UnselectBuilding();
 						ChangeIconPanelVisibility(IconPanel, false);
 					}
 
@@ -186,7 +187,11 @@ namespace RTS_Cam
 				}
 
 				// If no valid unit tag was hit, unselect units (ex: click on terrain)
-				if (!anySelected) UnSelectAllUnits();	
+                if (!anySelected)
+                {
+                    UnSelectAllUnits();	
+                    UnselectBuilding();
+                }
 			}
 		}
 
@@ -282,10 +287,10 @@ namespace RTS_Cam
 		}
 
 
-        private void UnselectBuilding(GameObject building) 
-        {           
+        private void UnselectBuilding() 
+        {                       
+            SetBuildingHighlightState(selectedBuilding, false);
             selectedBuilding = null;
-            SetBuildingHighlightState(building, false);
         }
 
 

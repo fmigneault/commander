@@ -40,19 +40,17 @@ namespace Buildings
 			// Allow building placement management only if the flag is enabled
             if (InPlacement)
             {   
+                bool rotate = Input.GetKey(BuildingMouseRotationKey);
+                bool place = Input.GetKeyUp(BuildingMousePlaceKey);
+
                 // Adjust building rotation while the mouse button is held down, otherwise adjust position
-                if (Input.GetKey(BuildingMouseRotationKey))
-                {                    
-                    RotateBuildingTowardDirection();
-                }
-                else if (Input.GetKeyUp(BuildingMousePlaceKey))
-                {                    
-                    PlaceDownBuilding();
-                }
-                else
-                {
-                    FollowMousePosition();
-                }
+                if (rotate)     RotateBuildingTowardDirection();
+                else if (place) PlaceDownBuilding();
+                else            FollowMousePosition();
+
+                // Display the directional arrow if rotating the building
+                var buildingManager = gameObject.GetComponent<BuildingManager>();
+                if (buildingManager != null) buildingManager.PointingArrowState = rotate;
 
 
                 #if OUTPUT_DEBUG
@@ -145,7 +143,10 @@ namespace Buildings
             RTSCamera.useMouseRotation = false;     // Override to lock camera rotation while rotating the building
 
             Vector3 mousePos;
-            if (GetTerrainPositionFromMouse(out mousePos)) transform.LookAt(mousePos);
+            if (GetTerrainPositionFromMouse(out mousePos))
+            {                                
+                transform.LookAt(mousePos);
+            }               
         }
 
 

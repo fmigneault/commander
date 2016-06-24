@@ -59,14 +59,7 @@ namespace Units
 					}
 				}
 			}
-		}
-
-
-		public bool SelectionHighlightState
-		{
-			get { return SelectionSprite != null && SelectionSprite.activeSelf; }
-			set { if (SelectionSprite != null) SelectionSprite.SetActive(value); }
-		}
+		}         
 
 
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
@@ -91,6 +84,13 @@ namespace Units
 				this.GetComponent<TankManager>().AimingTarget = target;
 			}
 		}
+
+
+        public bool SelectionHighlightState
+        {
+            get { return SelectionSprite != null && SelectionSprite.activeSelf; }
+            set { if (SelectionSprite != null) SelectionSprite.SetActive(value); }
+        }
 
 
 		private void InitializeSelectionHighlight()

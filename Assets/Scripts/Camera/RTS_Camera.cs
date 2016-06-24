@@ -171,6 +171,7 @@ namespace RTS_Cam
 
         private void Start()
         {            
+            useMouseRotation = true;
 			scrolling = new GameObject();
         }
 

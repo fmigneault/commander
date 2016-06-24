@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Buildings;
-using RTS_Cam;
 using Units;
 using UI;
 
@@ -21,7 +20,6 @@ namespace RTS_Cam
 		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
 		public string ConstructionTag;		// Tag of GameObjects which are construction units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
-		public string ButtonTag;			// Tag of GameObjects corresponding to buttons
 
 		// GUI Icon Panel
 		public GameObject IconPanel;
@@ -93,9 +91,11 @@ namespace RTS_Cam
 			// Generate a new instance of the corresponding building if a construction unit was selected
 			else if (selectedUnits.Count == 1 && selectedUnits.First().tag == ConstructionTag)
 			{
-				var unitManager = selectedUnits.First().GetComponent<UnitManager>();
+                // Get the requested building and generate the new instance
+                var constructionUnit = selectedUnits.First();
+                var unitManager = constructionUnit.GetComponent<UnitManager>();
 				var newBuilding = unitManager.ProducedBuildings[idx];
-				newBuilding.GetComponent<BuildingPlacementManager>().PlaceNewBuilding();
+                newBuilding.GetComponent<BuildingPlacementManager>().RequestNewBuildingPlacement(constructionUnit);               
 			}
 		}
 
@@ -126,17 +126,26 @@ namespace RTS_Cam
 				{								
 					// If the selected object is a building, unselect units and display icons of produced units
 					if (objectHit.tag == BuildingTag)
-					{
-						UnSelectAllUnits();
-						selectedBuilding = objectHit;
-						var iconList = objectHit.GetComponent<BuildingManager>().ProducedUnits;
-						PopulateIconPanel(IconPanel, iconList);
-						ChangeIconPanelVisibility(IconPanel, true);
-						return;
+					{						
+						selectedBuilding = objectHit;   // Update currently selected building
+
+                        // Display creatable units by the building only if it is not currently being placed 
+                        //    Avoids populating and displaying the icon list when clicking to place down the building 
+                        //    as it would necessarily select it since it is under the cursor and the same mouse button 
+                        //    can be used for both the selection of objects and the placing the building down
+                        if (!selectedBuilding.GetComponent<BuildingPlacementManager>().InPlacement)
+                        {
+                            UnSelectAllUnits();
+                            SetBuildingHighlightState(selectedBuilding, true);
+                            var iconList = selectedBuilding.GetComponent<BuildingManager>().ProducedUnits;
+    						PopulateIconPanel(IconPanel, iconList);
+    						ChangeIconPanelVisibility(IconPanel, true);
+    						return;
+                        }
 					}
 					else
 					{
-						selectedBuilding = null;
+                        UnselectBuilding(selectedBuilding);
 						ChangeIconPanelVisibility(IconPanel, false);
 					}
 
@@ -221,8 +230,9 @@ namespace RTS_Cam
 				if (!anyAttacked)
 				{
 					foreach (var unit in selectedUnits)
-					{
-						unit.GetComponent<UnitManager>().Attack(null);
+					{  
+                        var unitMan = unit.GetComponent<UnitManager>();
+                        if (unitMan != null) unitMan.Attack(null);
 					}
 				}
 				else return true;	// True if any unit was attacked
@@ -263,13 +273,33 @@ namespace RTS_Cam
 		{
 			if (unit != null)
 			{
-				UnitManager unitManager = unit.GetComponent<UnitManager>();
+				var unitManager = unit.GetComponent<UnitManager>();
 				if (unitManager != null)
 				{
 					unitManager.SelectionHighlightState = state;
 				}
 			}
 		}
+
+
+        private void UnselectBuilding(GameObject building) 
+        {           
+            selectedBuilding = null;
+            SetBuildingHighlightState(building, false);
+        }
+
+
+        private void SetBuildingHighlightState(GameObject building, bool state) 
+        {
+            if (building != null)
+            {
+                var buildingManager = building.GetComponent<BuildingManager>();
+                if (buildingManager != null)
+                {
+                    buildingManager.SelectionHighlightState = state;
+                }
+            }
+        }
 
 
 		private static void ChangeIconPanelVisibility(GameObject panel, bool visible)

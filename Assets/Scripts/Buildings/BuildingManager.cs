@@ -21,6 +21,7 @@ namespace Buildings
 	{
 		// General building information
 		public string Name = "";
+        public Color FactionColor = Color.white;
 
 		// Parameters for unit creation animation
 		public Transform SpawnPosition;
@@ -39,18 +40,17 @@ namespace Buildings
 		private readonly Queue ProductionQueue = new Queue(ProductionQueueSize);
 		private float CurrentDelay = 0f;
 
+        // Selected building highlight on ground reference
+        public GameObject SelectionSprite = null;
+
 		#if OUTPUT_DEBUG
 		public Text DebugLogText;
 		#endif
 
 		public void Start()
 		{
-			if (Door != null)
-			{
-				DoorClosedPosition = Door.transform.position;
-				DoorOpenedPosition = DoorClosedPosition;
-				DoorOpenedPosition.y += DoorOpenedDeltaY;
-			}
+            if (Door != null) InitializedDoorPositions();
+            InitializeSelectionHighlight();
 		}
 
 
@@ -63,7 +63,18 @@ namespace Buildings
 			DisplayQueuedUnits();
 			#endif
 
-			if (Door != null) UpdateDoorPosition();
+            if (Door != null) 
+            {
+                var placeManager = gameObject.GetComponent<BuildingPlacementManager>();
+                if (placeManager != null && placeManager.InPlacement)
+                {
+                    InitializedDoorPositions();     // Adjust new door positions according to new building location
+                }
+                else
+                {
+                    UpdateDoorPosition();
+                }
+            }
 		}
 
 
@@ -131,8 +142,11 @@ namespace Buildings
 				CurrentDoorStatus = DoorStatus.OPENING;
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);
 
-				// Move the unit from spawn position to exit position
+				// Transfer the building faction color to the produced unit
 				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
+                createdUnit.GetComponent<UnitManager>().FactionColor = FactionColor;
+
+                // Move the unit from spawn position to exit position
 				yield return MoveCreatedUnitToExit(createdUnit);
 
 				// Wait for the door to close completely
@@ -199,5 +213,27 @@ namespace Buildings
 			}
 		}
 		#endif
+
+
+        private void InitializedDoorPositions()
+        {
+            DoorClosedPosition = Door.transform.position;
+            DoorOpenedPosition = DoorClosedPosition;
+            DoorOpenedPosition.y += DoorOpenedDeltaY;
+        }
+
+
+        public bool SelectionHighlightState
+        {
+            get { return SelectionSprite != null && SelectionSprite.activeSelf; }
+            set { if (SelectionSprite != null) SelectionSprite.SetActive(value); }
+        }
+
+
+        private void InitializeSelectionHighlight()
+        {
+            SelectionSprite.GetComponent<SpriteRenderer>().color = FactionColor;
+            SelectionHighlightState = false;
+        }
 	}
 }

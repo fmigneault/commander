@@ -170,7 +170,8 @@ namespace RTS_Cam
         #region Unity_Methods
 
         private void Start()
-        {
+        {            
+            useMouseRotation = true;
 			scrolling = new GameObject();
         }
 

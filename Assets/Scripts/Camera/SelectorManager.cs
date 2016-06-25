@@ -20,7 +20,6 @@ namespace RTS_Cam
 		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
 		public string ConstructionTag;		// Tag of GameObjects which are construction units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
-        public bool AnyInPlacementFlag;     // Flag for building being placed, reset by 'BuildingPlacementManager'
 
 		// GUI Icon Panel
 		public GameObject IconPanel;
@@ -65,6 +64,14 @@ namespace RTS_Cam
 		}
 
 
+        // Flag for building being placed, reset by 'BuildingPlacementManager'
+        public bool AnyInPlacementFlag
+        {
+            get;
+            set;
+        }
+
+
 		public void ClickButtonPanel(Button buttonCliked)
 		{
 			// Update button clicked flag from external OnClick event (button must link to this function)
@@ -79,7 +86,7 @@ namespace RTS_Cam
 
 			#if OUTPUT_DEBUG
 			#region DEBUG
-			Debug.Log(string.Format("BUTTON CLICKED: {0}, {1}", buttonCliked.name, buttonClickedFlag));
+			Debug.Log(string.Format("Button clicked: {0}, {1}", buttonCliked.name, buttonClickedFlag));
 			#endregion
 			#endif	
 
@@ -119,7 +126,7 @@ namespace RTS_Cam
 			{		
 				#if OUTPUT_DEBUG
 				#region DEBUG
-				Debug.Log(objectHit.tag);
+                Debug.Log(string.Format("Object hit: {0}", objectHit.tag));
 				#endregion
 				#endif	
 
@@ -214,7 +221,7 @@ namespace RTS_Cam
 				// Get newly pointed unit selection
 				#if OUTPUT_DEBUG
 				#region DEBUG
-				Debug.Log(hitObject.tag);
+                Debug.Log(string.Format("Attack command received (type: {0})", hitObject.tag));
 				#endregion
 				#endif	
 

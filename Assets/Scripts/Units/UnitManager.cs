@@ -31,6 +31,7 @@ namespace Units
 		// Parameters for building construction (only if "construction" unit)
 		public List<GameObject> ProducedBuildings = null;
 
+
 		void Start ()
 		{
 			InitializeSelectionHighlight();
@@ -95,8 +96,10 @@ namespace Units
 
 		private void InitializeSelectionHighlight()
 		{
-			SelectionSprite.GetComponent<SpriteRenderer>().color = FactionColor;
-			SelectionHighlightState = false;
+            SpriteRenderer selectHighlightSprite = null;
+            if (SelectionSprite != null) selectHighlightSprite = SelectionSprite.GetComponent<SpriteRenderer>();
+            if (selectHighlightSprite != null) selectHighlightSprite.color = FactionColor;
+            SelectionHighlightState = false;
 		}
 	}
 }

@@ -20,6 +20,7 @@ namespace RTS_Cam
 		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
 		public string ConstructionTag;		// Tag of GameObjects which are construction units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
+        public bool AnyInPlacementFlag;     // Flag for building being placed, reset by 'BuildingPlacementManager'
 
 		// GUI Icon Panel
 		public GameObject IconPanel;
@@ -38,11 +39,12 @@ namespace RTS_Cam
 
 
 		void Start ()
-		{
+		{            
 			cam = gameObject.GetComponent<RTS_Camera>().GetComponent<Camera>();
 			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
 			selectedUnits = new List<GameObject>();
 			ChangeIconPanelVisibility(IconPanel, false);
+            AnyInPlacementFlag = false;
 		}
 		
 
@@ -95,7 +97,8 @@ namespace RTS_Cam
                 var constructionUnit = selectedUnits.First();
                 var unitManager = constructionUnit.GetComponent<UnitManager>();
 				var newBuilding = unitManager.ProducedBuildings[idx];
-                newBuilding.GetComponent<BuildingPlacementManager>().RequestNewBuildingPlacement(constructionUnit);               
+                newBuilding.GetComponent<BuildingPlacementManager>().RequestNewBuildingPlacement(constructionUnit);
+                AnyInPlacementFlag = true;
 			}
 		}
 
@@ -122,25 +125,33 @@ namespace RTS_Cam
 
 				// Verify if the hit gameobject is one of the selectable unit and that no button was previously clicked
 				bool anySelected = false;
-				if (SelectTags.Contains(objectHit.tag))
+                if (objectHit != null && SelectTags.Contains(objectHit.tag))
 				{								
 					// If the selected object is a building, unselect units and display icons of produced units
 					if (objectHit.tag == BuildingTag)
-					{		
-                        UnselectBuilding();             // Disable selection of possible previously selected building
-						selectedBuilding = objectHit;   // Update currently selected building
-
+					{	                        
                         // Display creatable units by the building only if it is not currently being placed 
                         //    Avoids populating and displaying the icon list when clicking to place down the building 
                         //    as it would necessarily select it since it is under the cursor and the same mouse button 
                         //    can be used for both the selection of objects and the placing the building down
-                        if (!selectedBuilding.GetComponent<BuildingPlacementManager>().InPlacement)
+                        // Also check a global placement flag
+                        //    Since overlapping building while placing one and another is already placed can possibily
+                        //    return any of the building reference when clicking on them, we cannot ensure 'objectHit'
+                        //    is the one currently being placed. This solves a error observed with overlapping buildings
+                        if (!objectHit.GetComponent<BuildingPlacementManager>().InPlacement && !AnyInPlacementFlag)
                         {
+                            // Disable selection of possible previously selected building or units
                             UnSelectAllUnits();
-                            SetBuildingHighlightState(selectedBuilding, true);
-                            var iconList = selectedBuilding.GetComponent<BuildingManager>().ProducedUnits;
+                            UnselectBuilding();           
+
+                            // Update icon and highlight display
+                            SetBuildingHighlightState(objectHit, true);
+                            var iconList = objectHit.GetComponent<BuildingManager>().ProducedUnits;
     						PopulateIconPanel(IconPanel, iconList);
     						ChangeIconPanelVisibility(IconPanel, true);
+
+                            // Update currently selected building
+                            selectedBuilding = objectHit; 
     						return;
                         }
 					}

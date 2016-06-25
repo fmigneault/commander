@@ -40,8 +40,9 @@ namespace Buildings
 		private readonly Queue ProductionQueue = new Queue(ProductionQueueSize);
 		private float CurrentDelay = 0f;
 
-        // Selected building highlight on ground reference
+        // Selected building highlight and arrow for rotation on ground references
         public GameObject SelectionSprite = null;
+        public GameObject PointingArrowSprite = null;
 
 		#if OUTPUT_DEBUG
 		public Text DebugLogText;
@@ -49,8 +50,8 @@ namespace Buildings
 
 		public void Start()
 		{
-            if (Door != null) InitializedDoorPositions();
-            InitializeSelectionHighlight();
+            InitializedDoorPositions();
+            InitializeSprites();
 		}
 
 
@@ -217,9 +218,12 @@ namespace Buildings
 
         private void InitializedDoorPositions()
         {
-            DoorClosedPosition = Door.transform.position;
-            DoorOpenedPosition = DoorClosedPosition;
-            DoorOpenedPosition.y += DoorOpenedDeltaY;
+            if (Door != null)
+            {
+                DoorClosedPosition = Door.transform.position;
+                DoorOpenedPosition = DoorClosedPosition;
+                DoorOpenedPosition.y += DoorOpenedDeltaY;
+            }
         }
 
 
@@ -230,10 +234,19 @@ namespace Buildings
         }
 
 
-        private void InitializeSelectionHighlight()
+        public bool PointingArrowState
+        {
+            get { return PointingArrowSprite != null && PointingArrowSprite.activeSelf; }
+            set { if (PointingArrowSprite != null) PointingArrowSprite.SetActive(value); }
+        }
+
+
+        private void InitializeSprites()
         {
             SelectionSprite.GetComponent<SpriteRenderer>().color = FactionColor;
             SelectionHighlightState = false;
+            PointingArrowSprite.GetComponent<SpriteRenderer>().color = FactionColor;
+            PointingArrowState = false;
         }
 	}
 }

@@ -135,9 +135,9 @@ namespace RTS_Cam
                         //    as it would necessarily select it since it is under the cursor and the same mouse button 
                         //    can be used for both the selection of objects and the placing the building down
                         // Also check a global placement flag
-                        //    Since overlaping building while placing one and another is already placed can possibily
+                        //    Since overlapping building while placing one and another is already placed can possibily
                         //    return any of the building reference when clicking on them, we cannot ensure 'objectHit'
-                        //    is the one currently being placed. This solves a error observed with overlaping buildings.
+                        //    is the one currently being placed. This solves a error observed with overlapping buildings
                         if (!objectHit.GetComponent<BuildingPlacementManager>().InPlacement && !AnyInPlacementFlag)
                         {
                             // Disable selection of possible previously selected building or units

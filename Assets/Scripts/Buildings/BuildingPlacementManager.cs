@@ -27,7 +27,10 @@ namespace Buildings
         private Color invalidPlacementMultiplier = new Color(2,1,1);    // Red multiplier for invalid placement 
         private Color currentPlacementMultiplier = new Color(1,1,1);    // For resetting default multiplier
 
-        private bool canPlaceDown = true;   // Status indicating if the building can be placed down (when no collision)
+        // Counter indicating if the building can be placed down (when no collision)
+        //    Use an integer to accumulate/decrement repectively to trigger enter/exit events
+        //    This ensures to not allow building placement in case of multiple overlaps triggering in alternance
+        private int overlappingBuildingCounter = 0;
 
 
         void Start()
@@ -100,7 +103,7 @@ namespace Buildings
 
         private void PlaceDownBuilding()
         {
-            if (canPlaceDown)
+            if (overlappingBuildingCounter == 0)
             {
                 FollowMousePosition();
                 InPlacement = false;
@@ -188,18 +191,18 @@ namespace Buildings
         {
             if (InPlacement && PlacementCollisionTags.Contains(otherCollider.gameObject.tag))
             {
-                canPlaceDown = false;
+                overlappingBuildingCounter++;
                 ApplyColorMultiplierToBuilding(invalidPlacementMultiplier);
             }
         }
 
 
         void OnTriggerExit(Collider otherCollider)
-        {
+        {            
             if (InPlacement && PlacementCollisionTags.Contains(otherCollider.gameObject.tag))
             {
-                canPlaceDown = true;
-                ApplyColorMultiplierToBuilding(validPlacementMultiplier);
+                overlappingBuildingCounter--;
+                if (overlappingBuildingCounter == 0) ApplyColorMultiplierToBuilding(validPlacementMultiplier);
             }
         }
 	}

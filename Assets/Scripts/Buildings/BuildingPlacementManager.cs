@@ -23,7 +23,7 @@ namespace Buildings
         private RTS_Camera RTSCamera;
 
         // Color adjustment when placing building (warning: zero values make color information irreversible, to avoid)
-        private Color validPlacementMultiplier =   new Color(1,2,1);    // Green multiplier for valid placement
+        private Color validPlacementMultiplier   = new Color(1,2,1);    // Green multiplier for valid placement
         private Color invalidPlacementMultiplier = new Color(2,1,1);    // Red multiplier for invalid placement 
         private Color currentPlacementMultiplier = new Color(1,1,1);    // For resetting default multiplier
 
@@ -110,7 +110,10 @@ namespace Buildings
                 // Desactivate trigger events
                 //    Since the building is placed down, it will not move anymore. No need to detect future trigger
                 //    event (enter/exit). Future collisions will be managed by following buildings that need placement.
-                GetComponent<BoxCollider>().isTrigger = false;              
+                GetComponent<BoxCollider>().isTrigger = false;     
+
+                // Reset global building placement flag
+                RTSCamera.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
 
                 #if OUTPUT_DEBUG
                 #region DEBUG

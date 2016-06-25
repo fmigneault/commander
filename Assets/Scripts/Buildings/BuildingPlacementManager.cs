@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-#define OUTPUT_DEBUG
+//#define OUTPUT_DEBUG
 
 using UnityEngine;
 using System.Collections;
@@ -11,18 +11,23 @@ namespace Buildings
 {	
 	public class BuildingPlacementManager : MonoBehaviour 
     {
-        // Flag that indicates if the building is currently being placed
-        public bool InPlacement = false;
-        public Terrain GroundTerrain;
-        public KeyCode BuildingMousePlaceKey = KeyCode.Mouse0;
-        public KeyCode BuildingMouseRotationKey = KeyCode.Mouse1;
-
-        // Current color multiplier applied to building (allows reset)
-        private Color currentColorMultiplier = new Color(1,1,1);      
+        
+        public bool InPlacement = false;        // Flag that indicates if the building is currently being placed
+        public Terrain GroundTerrain;           // Reference to terrain to align building with mouse position on ground
+        public KeyCode BuildingMousePlaceKey = KeyCode.Mouse0;      // Mouse button to place at current position
+        public KeyCode BuildingMouseRotationKey = KeyCode.Mouse1;   // Mouse button to rotate the buiding around itself            
+        public List<string> PlacementCollisionTags = null;          // Collision tags considered for invalid placement
 
         // RTS Camera control and references
-        private bool originalMouseRotationStatus;
+        private bool originalMouseRotationStatus;   // Allows reset of the original 'useMouseRotation' setting
         private RTS_Camera RTSCamera;
+
+        // Color adjustment when placing building (warning: zero values make color information irreversible, to avoid)
+        private Color validPlacementMultiplier =   new Color(1,2,1);    // Green multiplier for valid placement
+        private Color invalidPlacementMultiplier = new Color(2,1,1);    // Red multiplier for invalid placement 
+        private Color currentPlacementMultiplier = new Color(1,1,1);    // For resetting default multiplier
+
+        private bool canPlaceDown = true;   // Status indicating if the building can be placed down (when no collision)
 
 
         void Start()
@@ -30,8 +35,11 @@ namespace Buildings
             RTSCamera = Camera.main.GetComponent<RTS_Camera>();
             originalMouseRotationStatus = RTSCamera.useMouseRotation;
 
-            //ApplyColorMultiplierToBuilding(gameObject, new Color(3,0,0));
-            //gameObject.transform.position = new Vector3(-20, gameObject.transform.position.y, -20);
+            // Activate trigger events, this allows to detect new trigger events only when placing the building
+            //    When trigger is pre-enabled within the Unity Editor, all building instances get triggers, which makes
+            //    some of the collision detection fail to work as intented (triggers of already placed building launches
+            //    a 'OnTriggerExit' which in turn makes this building 'valid' for placement although it overlaps)
+            GetComponent<BoxCollider>().isTrigger = true;               
         }
 
 		
@@ -52,7 +60,6 @@ namespace Buildings
                 var buildingManager = gameObject.GetComponent<BuildingManager>();
                 if (buildingManager != null) buildingManager.PointingArrowState = rotate;
 
-
                 #if OUTPUT_DEBUG
                 #region DEBUG
                 if (RTSCamera != null) 
@@ -64,7 +71,7 @@ namespace Buildings
                     Debug.Log("PLACEMENT UPDATING - NULL CAMERA");
                 }
                 #endregion
-                #endif
+                #endif               
             }
 		}
             
@@ -93,26 +100,62 @@ namespace Buildings
 
         private void PlaceDownBuilding()
         {
-            FollowMousePosition();
-            InPlacement = false;
-            RTSCamera.useMouseRotation = originalMouseRotationStatus;   // Reset the original camera rotation option
+            if (canPlaceDown)
+            {
+                FollowMousePosition();
+                InPlacement = false;
+                RTSCamera.useMouseRotation = originalMouseRotationStatus;   // Reset the original camera rotation option
+                ApplyColorMultiplierToBuilding(new Color(1, 1, 1));         // Reset original color
 
-            #if OUTPUT_DEBUG
-            #region DEBUG
-            Debug.Log(string.Format("PLACE BUILDING DOWN, Camera Rotation: {0}", RTSCamera.useMouseRotation));
-            #endregion
-            #endif
+                // Desactivate trigger events
+                //    Since the building is placed down, it will not move anymore. No need to detect future trigger
+                //    event (enter/exit). Future collisions will be managed by following buildings that need placement.
+                GetComponent<BoxCollider>().isTrigger = false;              
+
+                #if OUTPUT_DEBUG
+                #region DEBUG
+                Debug.Log(string.Format("PLACE BUILDING DOWN, Camera Rotation: {0}", RTSCamera.useMouseRotation));
+                #endregion
+                #endif
+            }
         }
 
 
-        private void ApplyColorMultiplierToBuilding(GameObject building, Color colorMultiplier)
+        private void FollowMousePosition() 
         {
-            currentColorMultiplier *= colorMultiplier;
-            var buildingParts = building.GetComponentsInChildren<MeshRenderer>();
+            Vector3 mousePos;
+            if (GetTerrainPositionFromMouse(out mousePos)) gameObject.transform.position = mousePos;
+        }
+
+
+        private void RotateBuildingTowardDirection()
+        {          
+            RTSCamera.useMouseRotation = false;     // Override to lock camera rotation while rotating the building
+
+            Vector3 mousePos;
+            if (GetTerrainPositionFromMouse(out mousePos))
+            {                                
+                transform.LookAt(mousePos);
+            }               
+        }
+            
+
+        private void ApplyColorMultiplierToBuilding(Color colorMultiplier)
+        {     
+            // Find all sub-parts of the building (they must all have their color values adjusted)
+            var buildingParts = gameObject.GetComponentsInChildren<MeshRenderer>();
+
+            // Get the inverse of the previous color multiplier to reset to default color (return to (1,1,1) multiplier)
+            var invertMultiplier = new Color(1 / currentPlacementMultiplier.r, 
+                                             1 / currentPlacementMultiplier.g, 
+                                             1 / currentPlacementMultiplier.b);
+                
+            // Apply new multiplier to all parts and update current multiplier
             foreach (var part in buildingParts)
-            {                                        
-                part.material.color *= currentColorMultiplier;
+            {                   
+                part.material.color *= invertMultiplier * colorMultiplier;
             }
+            currentPlacementMultiplier = colorMultiplier;
         }
 
 
@@ -138,22 +181,23 @@ namespace Buildings
         }
 
 
-        private void RotateBuildingTowardDirection()
-        {          
-            RTSCamera.useMouseRotation = false;     // Override to lock camera rotation while rotating the building
-
-            Vector3 mousePos;
-            if (GetTerrainPositionFromMouse(out mousePos))
-            {                                
-                transform.LookAt(mousePos);
-            }               
+        void OnTriggerEnter(Collider otherCollider)
+        {
+            if (InPlacement && PlacementCollisionTags.Contains(otherCollider.gameObject.tag))
+            {
+                canPlaceDown = false;
+                ApplyColorMultiplierToBuilding(invalidPlacementMultiplier);
+            }
         }
 
 
-        private void FollowMousePosition() 
+        void OnTriggerExit(Collider otherCollider)
         {
-            Vector3 mousePos;
-            if (GetTerrainPositionFromMouse(out mousePos)) gameObject.transform.position = mousePos;
+            if (InPlacement && PlacementCollisionTags.Contains(otherCollider.gameObject.tag))
+            {
+                canPlaceDown = true;
+                ApplyColorMultiplierToBuilding(validPlacementMultiplier);
+            }
         }
 	}
 }

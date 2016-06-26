@@ -35,9 +35,9 @@ namespace Buildings
 		private Vector3 DoorClosedPosition;
 
 		// Parameters for unit production queue
-		public List<GameObject> ProducedUnits;
-		private const int ProductionQueueSize = 10;
-		private readonly Queue ProductionQueue = new Queue(ProductionQueueSize);
+        public int ProductionQueueSize = 10;
+		public List<GameObject> ProducedUnits;		
+		private Queue ProductionQueue;
 		private float CurrentDelay = 0f;
 
         // Selected building highlight and arrow for rotation on ground references
@@ -50,6 +50,7 @@ namespace Buildings
 
 		public void Start()
 		{
+            ProductionQueue = new Queue(ProductionQueueSize);
             InitializedDoorPositions();
             InitializeSprites();
 		}

@@ -9,10 +9,10 @@ using Units;
 
 namespace Buildings 
 {	
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(BoxCollider))]
 	public class BuildingPlacementManager : MonoBehaviour 
-    {
-        
-        public bool InPlacement = false;        // Flag that indicates if the building is currently being placed
+    {       
         public Terrain GroundTerrain;           // Reference to terrain to align building with mouse position on ground
         public List<string> PlacementCollisionTags = null;          // Collision tags considered for invalid placement
         public KeyCode BuildingPlacementCancelKey = KeyCode.Escape; // Keyboard button to cancel building placement
@@ -37,7 +37,7 @@ namespace Buildings
 
 
         void Start()
-        {
+        {            
             RTSCamera = Camera.main.GetComponent<RTS_Camera>();
             originalMouseRotationStatus = RTSCamera.useMouseRotation;
 
@@ -84,11 +84,19 @@ namespace Buildings
                 #endif               
             }
 		}
-            
+           
+
+        // Flag that indicates if the building is currently being placed
+        public bool InPlacement
+        {
+            get;
+            set;
+        }
+
 
 		public void RequestNewBuildingPlacement(GameObject constructionUnit)
 		{			
-            // A request to create a new building instance is done calling this function using the prefab, but the 
+            // A request to create a new building instance is done ny calling this function using the prefab, but the 
             // changes have to be applied to the instance of the building instanciated. Therefore, the instance is
             // created and following adjustment handling are passed to its corresponding 'BuildingPlacementManager'.
 			var newBuilding = Instantiate(gameObject);

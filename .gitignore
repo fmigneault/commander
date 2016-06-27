@@ -1,7 +1,4 @@
-Temp/
-Library/
-ProjectSettings/
-desktop.ini
-Commander.userprefs
-*.log
 bin/
+Temp/
+desktop.ini
+*.log

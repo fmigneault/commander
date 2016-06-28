@@ -149,7 +149,10 @@ namespace Buildings
                 createdUnit.GetComponent<UnitManager>().FactionColor = FactionColor;
 
                 // Move the unit from spawn position to exit position
-				yield return MoveCreatedUnitToExit(createdUnit);
+                createdUnit.GetComponent<UnitManager>().MoveToDestination(ExitPosition.position);
+
+                // Wait for a delay (let unit exit the building)
+                yield return new WaitForSeconds(DoorCloseWaitTime);
 
 				// Wait for the door to close completely
 				CurrentDoorStatus = DoorStatus.CLOSING;
@@ -158,16 +161,11 @@ namespace Buildings
 		}
 
 
-		private IEnumerator MoveCreatedUnitToExit(GameObject unit)
-		{
-			float movingSpeed = unit.GetComponent<UnitManager>().MovingSpeed;
-			while (unit.transform.position != ExitPosition.position)
-			{				
-				unit.transform.position = Vector3.MoveTowards(unit.transform.position, ExitPosition.position,
-															  movingSpeed * Time.deltaTime);
-				yield return null;
-			}
-		}
+//		private IEnumerator MoveCreatedUnitToExit(GameObject unit)
+//		{
+//            unit.GetComponent<UnitManager>().MoveToDestination(ExitPosition.position);
+//            yield return null;
+//		}
 			
 
 		private void UpdateDoorPosition()

@@ -10,6 +10,7 @@ Library/
 ExportedObj/
 obj/
 bin/
+.vs/
 
 # ======================
 # OS Related / Generated

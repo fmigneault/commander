@@ -1,4 +1,25 @@
-bin/
+# =============== 
+# Unity generated
+# ===============
 Temp/
+Library/
+
+# =====================================
+# Visual Studio / MonoDevelop generated
+# =====================================
+ExportedObj/
+obj/
+bin/
+
+# ======================
+# OS Related / Generated
+# ======================
 desktop.ini
+*.DS_store
+.DS_Store?
+._*
+
+# =====
+# Extra
+# =====
 *.log

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Units
@@ -9,8 +10,8 @@ namespace Units
 		public string Name = "";
 		public string Code = "";
 		public Color FactionColor = Color.white;
-		public bool isGroundUnit = false;
-		public bool isAirUnit = false;
+		public bool IsGroundUnit = false;
+		public bool IsAirUnit = false;
 
 		// Unit production parameters
 		public float ProductionDelay = 0; 
@@ -28,61 +29,142 @@ namespace Units
 		// Selected unit highlight on ground reference
 		public GameObject SelectionSprite = null;
 
-		// Parameters for building construction (only if "construction" unit)
+        // Parameters for building construction (only if "construction" unit)
 		public List<GameObject> ProducedBuildings = null;
+
+        // Internal memory of requested destination
+        //    Important: Temporarily assign origin position, but will be updated on 'Start' (see reason below)
+        private Vector3 destinationRequest = Vector3.zero;
+
+        // Internal memory of attack target
+        private GameObject attackTarget = null;
+
+        // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
+        private const float permissiveAngleDelta = 1;
 
 
 		void Start ()
 		{
 			InitializeSelectionHighlight();
+
+            // If the unit is already in the scene when launching the game, setting the destination to the current 
+            // position of the GameObject here has the same result as setting it at the variable declaration above.
+            // But, if a new unit instance is requested while the game is running, the reference of the unit to be
+            // instanciated will immediately exist while the actual instance will only be generated on the frame.
+            // Therefore, 'MoveToDestination' could be called to set the desired destination, but it would immediately 
+            // be overriden by the first 'Start' call when it is instanciated on the next frame.
+            // Setting the variable in the 'Start' call resolves the problem no matter when the unit is instanciated.
+            if (destinationRequest.Equals(Vector3.zero)) destinationRequest = transform.position;
 		}
-				
 
-		public void Attack(GameObject target)
-		{
-			if (target == null)
-			{
-				AttackDelegate(null);
-			}
-			else if (target == this.gameObject)
-			{
-				// Do nothing if unit to attack is itself
-				return;
-			}
-			else
-			{
-				UnitManager targetUnitManager = target.GetComponent<UnitManager>();
-				if (targetUnitManager != null)
-				{				
-					if (RespectsAttackTypes(targetUnitManager) && InAttackRange(target))
-					{
-						AttackDelegate(target);
-					}
-				}
-			}
-		}         
 
+        void Update()
+        {
+            UpdateAttackUnit();
+            if (!UpdateRotateUnit()) return;
+            UpdateMoveUnit();
+        }
+
+
+        // Function for outside calls to request new destinations 
+        public void MoveToDestination(Vector3 destination)
+        {      
+            // Stop attacking if it was, then request to move
+            AttackTarget(null);
+            destinationRequest = destination;
+
+            Debug.Log("Moving");
+        }
+
+
+        // Function for outside calls to request new target to attack
+        public void AttackTarget(GameObject target)
+        {        
+            // Do nothing if requested unit to attack is itself    
+            if (target != gameObject)
+            {               
+                attackTarget = target;
+            }
+        }   
+
+
+        private void UpdateMoveUnit()
+        {            
+            transform.position = Vector3.MoveTowards(transform.position, destinationRequest, MovingSpeed * Time.deltaTime);
+        }
+
+
+        private bool UpdateRotateUnit()
+        {     
+            var towardDestination = destinationRequest - transform.position;
+            var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
+            if (angleFromDestination > permissiveAngleDelta && !towardDestination.Equals(Vector3.zero))
+            {              
+                Debug.Log(angleFromDestination);
+                var rotationDestination = Quaternion.LookRotation(destinationRequest - transform.position, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
+                return false;
+            }
+            return true;
+        }
+
+
+        private void UpdateAttackUnit()
+        {
+            if (attackTarget != null)
+            {
+                UnitManager targetUnitManager = attackTarget.GetComponent<UnitManager>();
+                if (targetUnitManager != null && RespectsAttackTypes(targetUnitManager))
+                {
+                    // If not in range, move to minimum attack range first
+                    if (!InAttackRange(attackTarget))
+                    {
+                        Debug.Log("Out of Range - Moving first");
+                        destinationRequest = GetRequiredPositionInRange(attackTarget);
+                    }
+                    // Otherwise, cancel movement
+                    // This allows attacking right away an in-range unit
+                    else
+                    {
+                        Debug.Log("In Range - Stop moving");
+                        destinationRequest = transform.position;
+                    }
+                }
+            }
+
+            // Attack when in range or cancel attack if null
+            Debug.Log("In Range - Attacking");
+            AttackDelegate(attackTarget);
+        }
+	
 
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
 		{
-			return ((targetUnitManager.isAirUnit && this.CanAttackAir) || (targetUnitManager.isGroundUnit && this.CanAttackGround));
+			return ((targetUnitManager.IsAirUnit && CanAttackAir) || (targetUnitManager.IsGroundUnit && CanAttackGround));
 		}
 
 
 		private bool InAttackRange(GameObject target) 
 		{
-			double distance = (this.transform.position - target.transform.position).magnitude;
+			double distance = (transform.position - target.transform.position).magnitude;
 			if (distance >= MinAttackRange && distance <= MaxAttackRange) return true;
 			return false;
 		}
 
 
+        private Vector3 GetRequiredPositionInRange(GameObject target)
+        {
+            float distance = (transform.position - target.transform.position).magnitude;
+            return Vector3.Lerp(target.transform.position, transform.position, MaxAttackRange / distance);
+        }
+
+
 		// Function that delegates "Attack" calls/requirements to sub-classes of the GameObject linked to this "UnitManager" class
 		private void AttackDelegate(GameObject target)
 		{
-			if (this.gameObject.tag == "Tank")
+			if (gameObject.tag == "Tank")
 			{
-				this.GetComponent<TankManager>().AimingTarget = target;
+				GetComponent<TankManager>().AimingTarget = target;
 			}
 		}
 

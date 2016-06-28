@@ -196,9 +196,9 @@ namespace Buildings
         }
 
 
-        private bool GetTerrainPositionFromMouse(out Vector3 mousePosition) 
+        private bool GetTerrainPositionFromMouse(out Vector3 mousePositionOnTerrain) 
         {            
-            // Adjust the building position to mouse location on the terrain
+            // Adjust the building position to mouse location projected on the terrain
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             var hits = Physics.RaycastAll(ray);
             foreach (var h in hits)
@@ -209,11 +209,11 @@ namespace Buildings
                 //    mouse position, which returns an invalid distance and causes the building to jitter while placing
                 if (h.transform.gameObject.tag == GroundTerrain.tag)
                 {
-                    mousePosition = ray.GetPoint(h.distance);
+                    mousePositionOnTerrain = ray.GetPoint(h.distance);
                     return true;
                 }
             }
-            mousePosition = new Vector3();
+            mousePositionOnTerrain = Vector3.zero;
             return false;
         }
 

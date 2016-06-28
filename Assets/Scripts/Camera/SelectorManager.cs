@@ -24,10 +24,13 @@ namespace RTS_Cam
 		// GUI Icon Panel
 		public GameObject IconPanel;
 
+        // Terrain
+        public Terrain GroundTerrain;
+
 		// Key mappings
-		public KeyCode MultipleSelectKey = KeyCode.LeftControl;
-		public KeyCode UnitSelectionKey = KeyCode.Mouse0;
-		public KeyCode UnitAttackMoveKey = KeyCode.Mouse1;
+		public KeyCode MultipleSelectKey = KeyCode.LeftControl; // Multi-unit selection additional key
+        public KeyCode UnitSelectionKey = KeyCode.Mouse0;       // Unit selection mouse button (single and multi units)
+		public KeyCode UnitAttackMoveKey = KeyCode.Mouse1;      // Unit movement and attack command mouse button
 
 		// Internal control flags, selected objects memory and control parameters
 		private Camera cam;
@@ -37,7 +40,7 @@ namespace RTS_Cam
 		private bool buttonClickedFlag;		// Flag enabled when a OnClick event has called 'ClickButtonPanel'
 
 
-		void Start ()
+		void Start()
 		{            
 			cam = gameObject.GetComponent<RTS_Camera>().GetComponent<Camera>();
 			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
@@ -47,18 +50,17 @@ namespace RTS_Cam
 		}
 		
 
-		void Update () 
+		void Update() 
 		{			
 			Vector3 mousePosition = Input.mousePosition;
 
 			if (Input.GetKeyUp(UnitSelectionKey))
 			{			
-				SelectObjects(GetPointedObject(mousePosition), Input.GetKey(MultipleSelectKey));
+				SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
 			}
 			else if (Input.GetKeyUp(UnitAttackMoveKey))
 			{
-				bool attaking = AttackUnit(GetPointedObject(mousePosition));
-				if (!attaking) MoveUnit(mousePosition);
+                MoveAndOrAttackUnit(mousePosition);
 			}
 			buttonClickedFlag = false;	// Reset
 		}
@@ -110,32 +112,43 @@ namespace RTS_Cam
 		}
 
 
-		private GameObject GetPointedObject(Vector3 mousePosition)
+        private bool GetPointedObject(Vector3 mousePosition, out GameObject hitObject, out Vector3 terrainPosition)
 		{
-			// Draw ray from camera toward pointed position, the get collided object if available
+			// Draw ray from camera toward pointed position
+            // If successful, get collided object and corresponding terrain position
 			Ray ray = cam.ScreenPointToRay(mousePosition);
 			RaycastHit hit;
-			return Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance) ? hit.collider.gameObject : null;
+            bool succes = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);
+
+            terrainPosition = ray.GetPoint(hit.distance);
+            terrainPosition.y = 0;
+            hitObject = hit.collider.gameObject;
+            return succes;
 		}
+            
 
-
-		private void SelectObjects(GameObject objectHit, bool multipleSelect=false)
+		private void SelectObjects(Vector3 mousePosition, bool multipleSelect=false)
 		{
 			// Verify that selectable unit tags exist in the GameObject and that no button was previously clicked
 			if (SelectTags != null && !buttonClickedFlag)
 			{		
+                Vector3 hitPosition;
+                GameObject hitObject;
+                GetPointedObject(mousePosition, out hitObject, out hitPosition);
+
 				#if OUTPUT_DEBUG
 				#region DEBUG
-                Debug.Log(string.Format("Object hit: {0}", objectHit.tag));
+                if (hitObject == null) Debug.Log("No hit!");
+                else Debug.Log(string.Format("Object hit: {0}", hitObject.tag));
 				#endregion
 				#endif	
 
 				// Verify if the hit gameobject is one of the selectable unit and that no button was previously clicked
 				bool anySelected = false;
-                if (objectHit != null && SelectTags.Contains(objectHit.tag))
+                if (hitObject != null && SelectTags.Contains(hitObject.tag))
 				{								
 					// If the selected object is a building, unselect units and display icons of produced units
-					if (objectHit.tag == BuildingTag)
+					if (hitObject.tag == BuildingTag)
 					{	                        
                         // Display creatable units by the building only if it is not currently being placed 
                         //    Avoids populating and displaying the icon list when clicking to place down the building 
@@ -143,22 +156,22 @@ namespace RTS_Cam
                         //    can be used for both the selection of objects and the placing the building down
                         // Also check a global placement flag
                         //    Since overlapping building while placing one and another is already placed can possibily
-                        //    return any of the building reference when clicking on them, we cannot ensure 'objectHit'
+                        //    return any of the building reference when clicking on them, we cannot ensure 'hitObject'
                         //    is the one currently being placed. This solves a error observed with overlapping buildings
-                        if (!objectHit.GetComponent<BuildingPlacementManager>().InPlacement && !AnyInPlacementFlag)
+                        if (!hitObject.GetComponent<BuildingPlacementManager>().InPlacement && !AnyInPlacementFlag)
                         {
                             // Disable selection of possible previously selected building or units
                             UnSelectAllUnits();
                             UnselectBuilding();           
 
                             // Update icon and highlight display
-                            SetBuildingHighlightState(objectHit, true);
-                            var iconList = objectHit.GetComponent<BuildingManager>().ProducedUnits;
+                            SetBuildingHighlightState(hitObject, true);
+                            var iconList = hitObject.GetComponent<BuildingManager>().ProducedUnits;
     						PopulateIconPanel(IconPanel, iconList);
     						ChangeIconPanelVisibility(IconPanel, true);
 
                             // Update currently selected building
-                            selectedBuilding = objectHit; 
+                            selectedBuilding = hitObject; 
     						return;
                         }
 					}
@@ -172,15 +185,15 @@ namespace RTS_Cam
 					if (!multipleSelect) UnSelectAllUnits();						
 
 					// If using multiple selection, un-select already selected unit
-					if (multipleSelect && selectedUnits.Contains(objectHit))
+					if (multipleSelect && selectedUnits.Contains(hitObject))
 					{
-						UnselectSingleUnit(objectHit);
+						UnselectSingleUnit(hitObject);
 						return;
 					}
 
 					// Update unit selection
-					SetUnitHighlightState(objectHit, true);
-					selectedUnits.Add(objectHit);
+					SetUnitHighlightState(hitObject, true);
+					selectedUnits.Add(hitObject);
 					anySelected = (selectedUnits.Count > 0);
 
 					// Update GUI building icons, display if only one "construction" unit is selected
@@ -188,17 +201,17 @@ namespace RTS_Cam
 											 selectedUnits.ToArray()[0].tag == ConstructionTag);
 					if (displayBuildings)
 					{								
-						var iconList = objectHit.GetComponent<UnitManager>().ProducedBuildings;
+						var iconList = hitObject.GetComponent<UnitManager>().ProducedBuildings;
 						PopulateIconPanel(IconPanel, iconList);
 						ChangeIconPanelVisibility(IconPanel, displayBuildings);
 					}
 
 					#if OUTPUT_DEBUG
 					#region DEBUG
-					if (objectHit != null && objectHit.GetComponent<UnitManager>() != null) 
+					if (hitObject != null && hitObject.GetComponent<UnitManager>() != null) 
 					{
-						string hitName = objectHit.GetComponent<UnitManager>().Name;
-						Debug.Log(string.Format("Selected: {0}, {1}", objectHit.tag, hitName));
+						string hitName = hitObject.GetComponent<UnitManager>().Name;
+						Debug.Log(string.Format("Selected: {0}, {1}", hitObject.tag, hitName));
 					}
 					#endregion
 					#endif
@@ -214,63 +227,51 @@ namespace RTS_Cam
 		}
 
 
-		private bool AttackUnit(GameObject hitObject) 
+        private bool MoveAndOrAttackUnit(Vector3 mousePosition) 
 		{
+            Vector3 hitPosition;
+            GameObject hitObject;
+            GetPointedObject(mousePosition, out hitObject, out hitPosition);
+
+            bool anyCommand = false;
             if (hitObject != null && AttackTags != null && selectedUnits.Count != 0)
 			{			
 				// Get newly pointed unit selection
 				#if OUTPUT_DEBUG
 				#region DEBUG
-                Debug.Log(string.Format("Attack command received (type: {0})", hitObject.tag));
+                Debug.Log(string.Format("Move/Attack command received (type: {0})", hitObject.tag));
 				#endregion
 				#endif	
 
-				// Verify if the hit gameobject tag is one that can be attacked
-				bool anyAttacked = false;
-				if (AttackTags.Contains(hitObject.tag))
-				{			
-					// Apply newly pointed unit as target of already selected units
-					foreach (var unit in selectedUnits)
-					{
-						// Ask for the attack command if the selected/attacked units are not the same (cannot attack itself)
-						if (hitObject != unit) unit.GetComponent<UnitManager>().Attack(hitObject);
+                foreach (var unit in selectedUnits)
+                {
+                    var unitManager = unit.GetComponent<UnitManager>();
+                    if (unitManager != null)
+                    {                        
+                        if (hitObject.tag == GroundTerrain.tag)
+                        {                                
+                            unitManager.MoveToDestination(hitPosition);
+                            anyCommand = true;
+                        }
+                        else if (AttackTags.Contains(hitObject.tag))
+                        {
+                            unitManager.AttackTarget(hitObject);
+                            anyCommand = true;
+                        }
+                    }
 
-						#if OUTPUT_DEBUG
-						#region DEBUG
-						if (unit != null && unit.GetComponent<UnitManager>() != null && hitObject != null && hitObject.GetComponent<UnitManager>() != null) 
-						{
-							string attackUnitName = unit.GetComponent<UnitManager>().Name;
-							string hitName = hitObject.GetComponent<UnitManager>().Name;
-							Debug.Log(string.Format("Attack: {0}, {1} => {2}, {3}", unit.tag, attackUnitName, hitObject.tag, hitName));
-						}
-						#endregion
-						#endif
-					}
-					anyAttacked = true;
-				}	
-
-				// If no unit was hit for an attack, cancel any existing attack command by removing the target reference
-				if (!anyAttacked)
-				{
-					foreach (var unit in selectedUnits)
-					{  
-                        var unitMan = unit.GetComponent<UnitManager>();
-                        if (unitMan != null) unitMan.Attack(null);
-					}
-				}
-				else return true;	// True if any unit was attacked
+                    #if OUTPUT_DEBUG
+                    #region DEBUG
+                    if (unit != null && unitManager != null && hitObject != null && hitObject.GetComponent<UnitManager>() != null) 
+                    {
+                        string hitName = hitObject.GetComponent<UnitManager>().Name;
+                        Debug.Log(string.Format("Attack: {0}, {1} => {2}, {3}", unit.tag, unitManager.Name, hitObject.tag, hitName));
+                    }
+                    #endregion
+                    #endif
+                }
 			}	
-			return false;	// False in any case except when any unit was attacked
-		}
-
-
-		private bool MoveUnit(Vector3 mousePosition)
-		{
-
-
-
-
-			return false;	// Return value in case of invalid movement
+            return anyCommand;	// False in any case except if at least one unit received move/attack commands
 		}
 
 	

@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-#define OUTPUT_DEBUG
+//#define OUTPUT_DEBUG
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +34,7 @@ namespace RTS_Cam
 
 		// Internal control flags, selected objects memory and control parameters
 		private Camera cam;
+        private RTS_Camera cameraRTS;
 		private float maxDistance;
 		List<GameObject> selectedUnits;		// Currently selected units, accumulation possible if multiple key is used
 		GameObject selectedBuilding;		// Currently selected building, only one allowed at a time
@@ -42,7 +43,8 @@ namespace RTS_Cam
 
 		void Start()
 		{            
-			cam = gameObject.GetComponent<RTS_Camera>().GetComponent<Camera>();
+            cameraRTS = gameObject.GetComponent<RTS_Camera>();
+			cam = cameraRTS.GetComponent<Camera>();
 			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
 			selectedUnits = new List<GameObject>();
 			ChangeIconPanelVisibility(IconPanel, false);
@@ -54,11 +56,11 @@ namespace RTS_Cam
 		{			
 			Vector3 mousePosition = Input.mousePosition;
 
-			if (Input.GetKeyUp(UnitSelectionKey))
-			{			
-				SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
-			}
-			else if (Input.GetKeyUp(UnitAttackMoveKey))
+            if (Input.GetKeyUp(UnitSelectionKey))
+            {			
+                SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
+            }
+            else if (!AnyInPlacementFlag && !cameraRTS.IsRotatingWithMouse && Input.GetKeyUp(UnitAttackMoveKey))
 			{
                 MoveAndOrAttackUnit(mousePosition);
 			}

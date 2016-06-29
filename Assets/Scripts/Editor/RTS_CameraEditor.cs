@@ -114,8 +114,17 @@ namespace RTS_Cam
             if(camera.useMouseRotation)
             {
                 camera.mouseRotationKey = (KeyCode)EditorGUILayout.EnumPopup("Mouse rotation key: ", camera.mouseRotationKey);
-                camera.mouseRotationSpeed = EditorGUILayout.FloatField("Mouse rotation speed: ", camera.mouseRotationSpeed);
-				//camera.lockVerticalRotation = EditorGUILayout.Toggle("Lock vertical rotation: ", camera.lockVerticalRotation);
+                camera.mouseRotationSpeed = EditorGUILayout.FloatField("Mouse rotation speed: ", camera.mouseRotationSpeed);		
+
+                using (new HorizontalBlock())
+                {
+                    GUILayout.Label("Mouse secondary key: ", EditorStyles.boldLabel, GUILayout.Width(170f));
+                    camera.useMouseRotationSecondaryKey = EditorGUILayout.Toggle(camera.useMouseRotationSecondaryKey);
+                }
+                if (camera.useMouseRotationSecondaryKey)
+                {
+                    camera.mouseRotationSecondaryKey = (KeyCode)EditorGUILayout.EnumPopup("Mouse rotation 2nd key: ", camera.mouseRotationSecondaryKey);
+                }
             }
         }
 

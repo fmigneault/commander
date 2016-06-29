@@ -111,6 +111,9 @@ namespace RTS_Cam
         public bool useMouseRotation = true;
         public KeyCode mouseRotationKey = KeyCode.Mouse1;
 
+        public bool useMouseRotationSecondaryKey = true;
+        public KeyCode mouseRotationSecondaryKey = KeyCode.LeftControl;
+
         private Vector2 KeyboardInput
         {
             get { return useKeyboardInput ? new Vector2(Input.GetAxis(horizontalAxis), Input.GetAxis(verticalAxis)) : Vector2.zero; }
@@ -170,8 +173,7 @@ namespace RTS_Cam
         #region Unity_Methods
 
         private void Start()
-        {            
-            useMouseRotation = true;
+        {                        
 			scrolling = new GameObject();
         }
 
@@ -288,11 +290,25 @@ namespace RTS_Cam
 			if(useKeyboardRotation)
                 transform.Rotate(Vector3.up, RotationDirection * Time.deltaTime * rotationSpeed, Space.World);			
 
-			if (useMouseRotation && Input.GetKey(mouseRotationKey)) {
-				// Movement only along horizontal axis (locked vertical)
-				transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
-			}
+            // Movement only if using mouse rotation and key is held down
+            // Or if both the mouse rotation and secondary keys are held down if using secondary key option
+            if (useMouseRotation && Input.GetKey(mouseRotationKey) &&
+                (!useMouseRotationSecondaryKey || Input.GetKey(mouseRotationSecondaryKey)))
+            {				
+                IsRotatingWithMouse = true;
+
+                // Movement only along horizontal axis (locked vertical)
+                transform.Rotate(Vector3.up, -MouseAxis.x * Time.deltaTime * mouseRotationSpeed, Space.World);
+            }
+            else
+            {
+                IsRotatingWithMouse = false;
+            }
         }
+
+
+        public bool IsRotatingWithMouse { get; set; }
+
 
         /// <summary>
         /// follow targetif target != null

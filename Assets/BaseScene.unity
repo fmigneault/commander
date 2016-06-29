@@ -332,7 +332,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 459968, guid: 2b3d3d5a33ad99946b2cbc9d4c49a122, type: 2}
       propertyPath: m_RootOrder
-      value: 4
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 11428096, guid: 2b3d3d5a33ad99946b2cbc9d4c49a122, type: 2}
       propertyPath: terrain
@@ -346,6 +346,14 @@ Prefab:
       propertyPath: GroundTerrain
       value: 
       objectReference: {fileID: 1980506587}
+    - target: {fileID: 11455738, guid: 2b3d3d5a33ad99946b2cbc9d4c49a122, type: 2}
+      propertyPath: useMouseRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11455738, guid: 2b3d3d5a33ad99946b2cbc9d4c49a122, type: 2}
+      propertyPath: useMouseRotationSecondaryKey
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2b3d3d5a33ad99946b2cbc9d4c49a122, type: 2}
   m_IsPrefabParent: 0

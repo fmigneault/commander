@@ -45,7 +45,7 @@ namespace RTS_Cam
 		{            
             cameraRTS = gameObject.GetComponent<RTS_Camera>();
 			cam = cameraRTS.GetComponent<Camera>();
-			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 2;	
+			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 10;
 			selectedUnits = new List<GameObject>();
 			ChangeIconPanelVisibility(IconPanel, false);
             AnyInPlacementFlag = false;
@@ -120,11 +120,11 @@ namespace RTS_Cam
             // If successful, get collided object and corresponding terrain position
 			Ray ray = cam.ScreenPointToRay(mousePosition);
 			RaycastHit hit;
-            bool succes = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);
+            bool succes = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);           
 
             terrainPosition = ray.GetPoint(hit.distance);
             terrainPosition.y = 0;
-            hitObject = hit.collider.gameObject;
+            hitObject = hit.collider != null ? hit.collider.gameObject : null;
             return succes;
 		}
             

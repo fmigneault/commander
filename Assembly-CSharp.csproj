@@ -47,6 +47,7 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\Buildings\BuildingManager.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
+     <Compile Include="Assets\Scripts\Camera\MiniMapManager.cs" />
      <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
      <Compile Include="Assets\Scripts\Camera\SelectorManager.cs" />
      <Compile Include="Assets\Scripts\Camera\TargetFollower.cs" />

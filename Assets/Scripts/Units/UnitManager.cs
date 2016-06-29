@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Display debugging/logging info on console
+//#define OUTPUT_DEBUG
+
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -73,7 +76,11 @@ namespace Units
             AttackTarget(null);
             destinationRequest = destination;
 
+            #if OUTPUT_DEBUG
+            #region DEBUG
             Debug.Log("Moving");
+            #endregion
+            #endif
         }
 
 
@@ -119,22 +126,37 @@ namespace Units
                     // If not in range, move to minimum attack range first
                     if (!InAttackRange(attackTarget))
                     {
+                        #if OUTPUT_DEBUG
+                        #region DEBUG
                         Debug.Log("Out of Range - Moving first");
+                        #endregion
+                        #endif
+
                         destinationRequest = GetRequiredPositionInRange(attackTarget);
                     }
                     // Otherwise, cancel movement
                     // This allows attacking right away an in-range unit
                     else
                     {
+                        #if OUTPUT_DEBUG
+                        #region DEBUG
                         Debug.Log("In Range - Stop moving");
+                        #endregion
+                        #endif
+
                         destinationRequest = transform.position;
                     }
                 }
             }
 
             // Attack when in range or cancel attack if null
-            Debug.Log("In Range - Attacking");
             AttackDelegate(attackTarget);
+
+            #if OUTPUT_DEBUG
+            #region DEBUG
+            Debug.Log("In Range - Attacking");
+            #endregion
+            #endif
         }
 	
 

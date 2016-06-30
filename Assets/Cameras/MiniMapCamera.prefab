@@ -71,7 +71,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 734ded76db4d9ef4fb84b7c2555a8d9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GroundTerrain: {fileID: 0}
+  GroundTerrain: {fileID: 21877552, guid: 588b8a054f723494fa9a4e7581a2a902, type: 2}
+  MinimapPosition: {fileID: 0}
 --- !u!124 &12492024
 Behaviour:
   m_ObjectHideFlags: 1

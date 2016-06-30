@@ -1,10 +1,12 @@
 fileFormatVersion: 2
 guid: 734ded76db4d9ef4fb84b7c2555a8d9d
-timeCreated: 1467170818
+timeCreated: 1467254188
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - GroundTerrain: {instanceID: 0}
+  - CameraTexture: {fileID: 8400000, guid: daaf536d6147a9f46b0ab8c979e3b583, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -118,10 +118,10 @@ class ZGONAssetPostProcessor : AssetPostprocessor
 		
 		// Disable auto generated materials
 		ModelImporter importer = (ModelImporter)assetImporter;
-		importer.generateMaterials = ModelImporterGenerateMaterials.None;
+        importer.importMaterials = false;   // Reaplced: importer.generateMaterials = ModelImporterGenerateMaterials.None;
 		importer.swapUVChannels = false;
-		importer.generateAnimations = ModelImporterGenerateAnimations.None;
-		importer.tangentImportMode = ModelImporterTangentSpaceMode.None;
+		importer.generateAnimations = ModelImporterGenerateAnimations.None;		
+        importer.importTangents = ModelImporterTangents.None;   // Replaced: importer.tangentImportMode = ModelImporterTangentSpaceMode.None;
 		importer.addCollider = true;
 		ZGONMeshFloatProperty objScale = (ZGONMeshFloatProperty)SearchMeshProps(ZGONAssetProperties.objScaleName);
 		importer.globalScale = objScale.Value;
@@ -269,8 +269,8 @@ class ZGONAssetPostProcessor : AssetPostprocessor
 	void SetupPrefab(GameObject gameObject, Material material)
 	{
 		string prefabPath = _meshsetRootDir + "/" + _prefabDirName + "/" + gameObject.name + ".prefab";
-		UnityEngine.Object prefab = EditorUtility.CreateEmptyPrefab(prefabPath);
-		EditorUtility.ReplacePrefab(gameObject, prefab);
+        UnityEngine.Object prefab = PrefabUtility.CreateEmptyPrefab(prefabPath);  // Replaced: UnityEngine.Object prefab = EditorUtility.CreateEmptyPrefab(prefabPath);
+        PrefabUtility.ReplacePrefab(gameObject, prefab);  // Replaced: EditorUtility.ReplacePrefab(gameObject, prefab);
 	}
 	
 	Material SetupMaterial(GameObject gameObject)

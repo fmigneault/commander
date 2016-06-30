@@ -11,9 +11,9 @@ using Buildings;
 using Units;
 using UI;
 
-namespace RTS_Cam
+namespace Cameras
 {
-	[RequireComponent(typeof(RTS_Camera))]
+	[RequireComponent(typeof(RTS_CameraManager))]
 	public class SelectorManager : MonoBehaviour 
 	{
 		public string[] SelectTags;			// Tags of GameObjects which selection is permitted
@@ -34,21 +34,23 @@ namespace RTS_Cam
 
 		// Internal control flags, selected objects memory and control parameters
 		private Camera cam;
-        private RTS_Camera cameraRTS;
+        private RTS_CameraManager cameraRTS;
 		private float maxDistance;
 		List<GameObject> selectedUnits;		// Currently selected units, accumulation possible if multiple key is used
 		GameObject selectedBuilding;		// Currently selected building, only one allowed at a time
 		private bool buttonClickedFlag;		// Flag enabled when a OnClick event has called 'ClickButtonPanel'
+        private bool previousMouseRotation; // Flag indicating if a mouse rotation was occuring on the previous frame
 
 
 		void Start()
 		{            
-            cameraRTS = gameObject.GetComponent<RTS_Camera>();
+            cameraRTS = gameObject.GetComponent<RTS_CameraManager>();
 			cam = cameraRTS.GetComponent<Camera>();
-			maxDistance = gameObject.GetComponent<RTS_Camera>().maxHeight * 10;
+            maxDistance = cameraRTS.maxHeight * 10;
 			selectedUnits = new List<GameObject>();
 			ChangeIconPanelVisibility(IconPanel, false);
             AnyInPlacementFlag = false;
+            previousMouseRotation = false;
 		}
 		
 
@@ -60,10 +62,15 @@ namespace RTS_Cam
             {			
                 SelectObjects(mousePosition, Input.GetKey(MultipleSelectKey));
             }
-            else if (!AnyInPlacementFlag && !cameraRTS.IsRotatingWithMouse && Input.GetKeyUp(UnitAttackMoveKey))
+            // Since the same mouse click for unit movement/attack, building placement rotation and camera rotation 
+            // can cause interferances, we validate the statuses camera and building rotation to allow unit commands
+            //    Since the mouse 'up' event marks the end of the camera rotation, we have to check the previous frame
+            //    to allow commands, otherwise the end of the camera rotation triggers selected unit move/attack command
+            else if (!AnyInPlacementFlag && !previousMouseRotation && Input.GetKeyUp(UnitAttackMoveKey))
 			{
                 MoveAndOrAttackUnit(mousePosition);
 			}
+            previousMouseRotation = cameraRTS.IsRotatingWithMouse;  // Update for next frame
 			buttonClickedFlag = false;	// Reset
 		}
 
@@ -148,7 +155,7 @@ namespace RTS_Cam
 				// Verify if the hit gameobject is one of the selectable unit and that no button was previously clicked
 				bool anySelected = false;
                 if (hitObject != null && SelectTags.Contains(hitObject.tag))
-				{								
+				{		
 					// If the selected object is a building, unselect units and display icons of produced units
 					if (hitObject.tag == BuildingTag)
 					{	                        

@@ -12,7 +12,7 @@ GameObject:
   - 114: {fileID: 11442166}
   - 114: {fileID: 11458872}
   - 114: {fileID: 11422426}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: IronDove
   m_TagString: Tank
   m_Icon: {fileID: 0}
@@ -28,7 +28,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 470020}
   - 212: {fileID: 21293782}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: SelectionHighlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,7 +45,7 @@ GameObject:
   - 4: {fileID: 449132}
   - 33: {fileID: 3379992}
   - 23: {fileID: 2352354}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Barrel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -62,7 +62,7 @@ GameObject:
   - 4: {fileID: 482936}
   - 33: {fileID: 3357254}
   - 23: {fileID: 2378122}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79,7 +79,7 @@ GameObject:
   - 4: {fileID: 415396}
   - 33: {fileID: 3325142}
   - 23: {fileID: 2303280}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,7 +96,7 @@ GameObject:
   - 4: {fileID: 443168}
   - 33: {fileID: 3337404}
   - 23: {fileID: 2321606}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tracks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,7 +127,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 443712}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: BarrelPivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -144,7 +144,7 @@ GameObject:
   - 4: {fileID: 486960}
   - 33: {fileID: 3310880}
   - 23: {fileID: 2344636}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Hatch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -159,7 +159,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 428252}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -174,7 +174,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 499684}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Turret
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -191,7 +191,7 @@ GameObject:
   - 4: {fileID: 450538}
   - 33: {fileID: 3389668}
   - 23: {fileID: 2319886}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Wheels
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -208,7 +208,7 @@ GameObject:
   - 4: {fileID: 456268}
   - 33: {fileID: 3315738}
   - 23: {fileID: 2330140}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: RadarBottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -225,7 +225,7 @@ GameObject:
   - 4: {fileID: 462350}
   - 33: {fileID: 3381622}
   - 23: {fileID: 2370128}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: RadarTop
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -110,8 +110,7 @@ namespace Units
             var towardDestination = destinationRequest - transform.position;
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
             if (angleFromDestination > permissiveAngleDelta && !towardDestination.Equals(Vector3.zero))
-            {              
-                Debug.Log(angleFromDestination);
+            {                              
                 var rotationDestination = Quaternion.LookRotation(destinationRequest - transform.position, Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
                 return false;

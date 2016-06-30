@@ -47,13 +47,13 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\Buildings\BuildingManager.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
-     <Compile Include="Assets\Scripts\Camera\MiniMapManager.cs" />
-     <Compile Include="Assets\Scripts\Camera\RTS_Camera.cs" />
-     <Compile Include="Assets\Scripts\Camera\SelectorManager.cs" />
-     <Compile Include="Assets\Scripts\Camera\TargetFollower.cs" />
-     <Compile Include="Assets\Scripts\Terrain\ApplyTerrainBorderLimits.cs" />
-     <Compile Include="Assets\Scripts\Terrain\CenterTerrain.cs" />
-     <Compile Include="Assets\Scripts\Terrain\TextureRenderer.cs" />
+     <Compile Include="Assets\Scripts\Cameras\MiniMapManager.cs" />
+     <Compile Include="Assets\Scripts\Cameras\RTS_CameraManager.cs" />
+     <Compile Include="Assets\Scripts\Cameras\SelectorManager.cs" />
+     <Compile Include="Assets\Scripts\Cameras\TargetFollower.cs" />
+     <Compile Include="Assets\Scripts\Terrains\ApplyTerrainBorderLimits.cs" />
+     <Compile Include="Assets\Scripts\Terrains\CenterTerrain.cs" />
+     <Compile Include="Assets\Scripts\Terrains\TextureRenderer.cs" />
      <Compile Include="Assets\Scripts\UI\AttackDebugButtons.cs" />
      <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\UI\IconManager.cs" />

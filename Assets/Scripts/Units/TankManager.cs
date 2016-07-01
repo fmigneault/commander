@@ -1,33 +1,53 @@
-﻿using UnityEngine;
+﻿// Display debugging/logging info on console
+#define OUTPUT_DEBUG
+
+using UnityEngine;
 using System.Collections;
 
 namespace Units 
 {	
-	[RequireComponent(typeof(Units.UnitManager))]
+	[RequireComponent(typeof(UnitManager))]
 	public class TankManager : MonoBehaviour
-	{		
+	{		        
 		public GameObject AimingTarget;		// Specify a location to make the cannon look at (ennemy, building, default: forward if null)
-		public GameObject CannonTurret;		// Reference to cannon section of the tank
-		public GameObject CannonBarrel;		// Reference to barrel section of the tank (shooting, pivot has to be at connection with turret)
+        public GameObject AttackBullet;     // Prefab that will act as a projectile fired when attacking 
+        public float AttackBulletSpeed;     // Speed at which the projectile is fired
+        public float AttackMinInterval;     // Minimum delay required until next attack is permitted (fire next bullet)
+        public GameObject BarrelOutput;     // Position to fire the projectile from the barrel (bullet start position)
+        public GameObject CannonTurret;		// Reference to cannon section of the tank
+        public GameObject CannonBarrel;		// Reference to barrel section of the tank (shooting, pivot has to be at connection with turret)
 		public float CannonRotateSpeed;		// Cannon rotation speed in deg/s (zero if cannot rotate independantly, ie: turn the whole tank)
 		public float BarrelRotateSpeed;		// Upward rotation speed in deg/s (zero if cannot rotate barrel up/down)
 		public bool BarrelLockOnTarget;		// Specify if the barrel needs to aim at the target to attack
 		public float BarrelAttackAngle;		// Required angle of barrel to attack
 
-		private Units.UnitManager unitManager;
+		private UnitManager unitManager;
 		private float barrelRotationDelta;
+        private float currentAttackDelay = 0;
+
 
 		void Awake ()
 		{
-			unitManager = GetComponent<Units.UnitManager>();
+			unitManager = GetComponent<UnitManager>();
 			barrelRotationDelta = BarrelRotateSpeed * Time.deltaTime;
+
+            // Instanciate bullet from reference prefab and hide it
+            if (AttackBullet != null)
+            {
+                AttackBullet = Instantiate(AttackBullet);
+                ProjectileVisibility = false;
+            }
 		}
 
 
 		void Update ()
-		{				
+		{				            
+            // Update attack timer
+            currentAttackDelay = Mathf.Clamp(currentAttackDelay - Time.deltaTime, 0, currentAttackDelay);
+
 			AdjustCannonTurretRotation();
 			AdjustCannonBarrelRotation();
+            ExecuteProjectileAnimation();           
 		}
 
 
@@ -64,7 +84,7 @@ namespace Units
 		}
 
 
-		public void AdjustCannonBarrelRotation() 
+		private void AdjustCannonBarrelRotation() 
 		{	
 			Quaternion barrelRelativeAngleX;	
 			if (BarrelLockOnTarget && AimingTarget != null)
@@ -92,5 +112,75 @@ namespace Units
 			// Apply the rotation
 			CannonBarrel.transform.rotation = Quaternion.RotateTowards(CannonBarrel.transform.rotation, barrelRelativeAngleX, barrelRotationDelta);
 		}
+
+
+        private bool ProjectileVisibility
+        {
+            set { AttackBullet.SetActive(value); }
+            get { return AttackBullet.activeSelf; }
+        }
+
+
+        private void ExecuteProjectileAnimation()
+        {
+            // Execute the animation only if a target and projectile were specified, and the delay between shots is over
+            if (AimingTarget != null && AttackBullet != null && currentAttackDelay <= 0)
+            {
+                // Get the angle between the barrel and the target
+                // Shoot the projectile only if properly aiming at the target
+                var barrelTowardTarget = CannonBarrel.transform.position - AimingTarget.transform.position;
+                barrelTowardTarget.y = 0;   // Suppress height variation because we want XZ angle
+                var angleAwayFromTarget = Vector3.Angle(barrelTowardTarget, CannonBarrel.transform.forward);
+                Debug.Log(string.Format("Angle: {0}",angleAwayFromTarget));
+                if (angleAwayFromTarget == 0)
+                {   
+                    // Apply required trajectory (arc or linear) according to barrel operation mode
+                    if (BarrelAttackAngle == 0)
+                    {
+                        #if OUTPUT_DEBUG
+                        #region DEBUG
+                        Debug.Log("FIRE LIN!");
+                        #endregion
+                        #endif
+
+                        StartCoroutine(LinearProjectileAnimation());
+                    }
+                    else
+                    {
+                        #if OUTPUT_DEBUG
+                        #region DEBUG
+                        Debug.Log("FIRE ARC!");
+                        #endregion
+                        #endif
+
+                        //################### ARC TRAJECTORY
+                    }
+
+                    // Reset timer for the next attack allowed
+                    currentAttackDelay = AttackMinInterval;
+                }
+            }
+        }
+
+
+        private IEnumerator LinearProjectileAnimation()
+        {
+            // Display the projectile and place it at the barrel exit 
+            ProjectileVisibility = true;
+            AttackBullet.transform.position = BarrelOutput.transform.position;
+            AttackBullet.transform.rotation = BarrelOutput.transform.rotation;
+
+            // Linear trajectory of the projectile until the target is reached
+            while (AttackBullet.transform.position != AimingTarget.transform.position)
+            {
+                AttackBullet.transform.position = Vector3.MoveTowards(AttackBullet.transform.position, 
+                                                                      AimingTarget.transform.position,
+                                                                      AttackBulletSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            //Hide the projectile when the target was reached
+            ProjectileVisibility = false;
+        }
 	}
 }

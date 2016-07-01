@@ -7,11 +7,11 @@ using System.Collections;
  Modified by:
  	Francis Charette Migneault
 */
-namespace RTS_Cam
+namespace Cameras
 {
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu("RTS Camera")]
-	public class RTS_Camera : MonoBehaviour
+	public class RTS_CameraManager : MonoBehaviour
     {
 
         #region Foldouts

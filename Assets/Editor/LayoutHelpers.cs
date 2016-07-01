@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 
-
 public class VerticalBlock : IDisposable
 {
     public VerticalBlock(params GUILayoutOption[] options)

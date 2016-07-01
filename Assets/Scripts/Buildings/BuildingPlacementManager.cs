@@ -4,7 +4,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using RTS_Cam;
+using Cameras;
 using Units;
 
 namespace Buildings 
@@ -23,7 +23,7 @@ namespace Buildings
 
         // RTS Camera control and references
         private bool originalMouseRotationStatus;   // Allows reset of the original 'useMouseRotation' setting
-        private RTS_Camera RTSCamera;
+        private RTS_CameraManager CameraRTS;
 
         // Color adjustment when placing building (warning: zero values make color information irreversible, to avoid)
         private Color validPlacementMultiplier   = new Color(1,2,1);    // Green multiplier for valid placement
@@ -38,8 +38,8 @@ namespace Buildings
 
         void Start()
         {            
-            RTSCamera = Camera.main.GetComponent<RTS_Camera>();
-            originalMouseRotationStatus = RTSCamera.useMouseRotation;
+            CameraRTS = Camera.main.GetComponent<RTS_CameraManager>();
+            originalMouseRotationStatus = CameraRTS.useMouseRotation;
 
             // Activate trigger events, this allows to detect new trigger events only when placing the building
             //    When trigger is pre-enabled within the Unity Editor, all building instances get triggers, which makes
@@ -107,6 +107,7 @@ namespace Buildings
             var newBuildingManager = newBuilding.GetComponent<BuildingManager>();
             var constructionUnitManager = constructionUnit.GetComponent<UnitManager>();
             newBuildingManager.FactionColor = constructionUnitManager.FactionColor;
+            newBuildingManager.MiniMapVisibility = false; // Hidden on minimap until the building is placed down
 
             #if OUTPUT_DEBUG
             #region DEBUG
@@ -119,11 +120,14 @@ namespace Buildings
         private void PlaceDownBuilding()
         {
             if (overlappingBuildingCounter == 0)
-            {
-                FollowMousePosition();
-                InPlacement = false;
-                RTSCamera.useMouseRotation = originalMouseRotationStatus;   // Reset the original camera rotation option
+            {                
+                FollowMousePosition();  // Place at current mouse position
+                InPlacement = false;    // Stop local placement flag
+                CameraRTS.useMouseRotation = originalMouseRotationStatus;   // Reset the original camera rotation option
                 ApplyColorMultiplierToBuilding(new Color(1, 1, 1));         // Reset original color
+
+                // Activate display on minimap since the building will not exist on the terrain
+                GetComponent<BuildingManager>().MiniMapVisibility = true;
 
                 // Desactivate trigger events
                 //    Since the building is placed down, it will not move anymore. No need to detect future trigger
@@ -131,7 +135,7 @@ namespace Buildings
                 GetComponent<BoxCollider>().isTrigger = false;     
 
                 // Reset global building placement flag
-                RTSCamera.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
+                CameraRTS.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
 
                 #if OUTPUT_DEBUG
                 #region DEBUG
@@ -145,7 +149,7 @@ namespace Buildings
         private void CancelBuildingPlacement()
         {            
             // Reset global building placement flag
-            RTSCamera.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
+            CameraRTS.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
 
             // Destroy object instance
             Destroy(gameObject);
@@ -161,7 +165,7 @@ namespace Buildings
 
         private void RotateBuildingTowardDirection()
         {          
-            RTSCamera.useMouseRotation = false;     // Override to lock camera rotation while rotating the building
+            CameraRTS.useMouseRotation = false;     // Override to lock camera rotation while rotating the building
 
             Vector3 mousePos;
             if (GetTerrainPositionFromMouse(out mousePos))

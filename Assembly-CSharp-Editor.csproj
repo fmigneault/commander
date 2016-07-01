@@ -46,8 +46,8 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Buildings\ModernConcreteFacades\Editor\ZGONAssetPostProcessor.cs" />
-     <Compile Include="Assets\Scripts\Editor\LayoutHelpers.cs" />
-     <Compile Include="Assets\Scripts\Editor\RTS_CameraEditor.cs" />
+     <Compile Include="Assets\Editor\LayoutHelpers.cs" />
+     <Compile Include="Assets\Editor\RTS_CameraEditor.cs" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Modern_ConcreteBuildingExt_01.xml" />

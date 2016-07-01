@@ -32,6 +32,9 @@ namespace Units
 		// Selected unit highlight on ground reference
 		public GameObject SelectionSprite = null;
 
+        // Icon used to represent the unit on the Mini-Map
+        public SpriteRenderer MiniMapIconSprite = null;
+
         // Parameters for building construction (only if "construction" unit)
 		public List<GameObject> ProducedBuildings = null;
 
@@ -49,6 +52,7 @@ namespace Units
 		void Start ()
 		{
 			InitializeSelectionHighlight();
+            InitializeMiniMapIcon();
 
             // If the unit is already in the scene when launching the game, setting the destination to the current 
             // position of the GameObject here has the same result as setting it at the variable declaration above.
@@ -106,8 +110,7 @@ namespace Units
             var towardDestination = destinationRequest - transform.position;
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
             if (angleFromDestination > permissiveAngleDelta && !towardDestination.Equals(Vector3.zero))
-            {              
-                Debug.Log(angleFromDestination);
+            {                              
                 var rotationDestination = Quaternion.LookRotation(destinationRequest - transform.position, Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
                 return false;
@@ -205,5 +208,11 @@ namespace Units
             if (selectHighlightSprite != null) selectHighlightSprite.color = FactionColor;
             SelectionHighlightState = false;
 		}
+
+
+        private void InitializeMiniMapIcon()
+        {
+            if (MiniMapIconSprite != null) MiniMapIconSprite.color = FactionColor;
+        }
 	}
 }

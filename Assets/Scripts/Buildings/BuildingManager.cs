@@ -44,6 +44,9 @@ namespace Buildings
         public GameObject SelectionSprite = null;
         public GameObject PointingArrowSprite = null;
 
+        // Icon used to represent the unit on the Mini-Map
+        public SpriteRenderer MiniMapIconSprite = null;
+
 		#if OUTPUT_DEBUG
 		public Text DebugLogText;
 		#endif
@@ -159,13 +162,6 @@ namespace Buildings
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);						
 			}
 		}
-
-
-//		private IEnumerator MoveCreatedUnitToExit(GameObject unit)
-//		{
-//            unit.GetComponent<UnitManager>().MoveToDestination(ExitPosition.position);
-//            yield return null;
-//		}
 			
 
 		private void UpdateDoorPosition()
@@ -246,6 +242,22 @@ namespace Buildings
             SelectionHighlightState = false;
             PointingArrowSprite.GetComponent<SpriteRenderer>().color = FactionColor;
             PointingArrowState = false;
+        }
+
+
+        public bool MiniMapVisibility
+        {
+            get { return MiniMapIconSprite != null && MiniMapIconSprite.enabled; }
+            set { if (MiniMapIconSprite != null) MiniMapIconSprite.enabled = value; }
+        }
+
+
+        private void InitializeMiniMapIcon()
+        {
+            if (MiniMapIconSprite != null)
+            {                
+                MiniMapIconSprite.color = FactionColor;
+            }
         }
 	}
 }

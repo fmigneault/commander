@@ -99,13 +99,15 @@ MonoBehaviour:
   - Tank
   - Builder
   - Building
+  - Unit
   AttackTags:
   - Tank
   - Builder
   - Unit
-  ConstructionTag: Builder
+  BuilderTag: Builder
   BuildingTag: Building
   IconPanel: {fileID: 0}
+  SelectionBox: {fileID: 0}
   GroundTerrain: {fileID: 0}
   MultipleSelectKey: 306
   UnitSelectionKey: 323
@@ -182,6 +184,7 @@ MonoBehaviour:
   mouseRotationKey: 324
   useMouseRotationSecondaryKey: 1
   mouseRotationSecondaryKey: 306
+  mouseRotationSecondaryKeyOther: 305
 --- !u!114 &11488424
 MonoBehaviour:
   m_ObjectHideFlags: 1

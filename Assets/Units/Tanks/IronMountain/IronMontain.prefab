@@ -391,7 +391,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 179650}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20, y: 0, z: 20}
+  m_LocalPosition: {x: 40, y: 0, z: 20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 360, z: 0}
   m_Children:
@@ -736,7 +736,7 @@ MonoBehaviour:
   RotationSpeed: 100
   CanAttackGround: 1
   CanAttackAir: 0
-  MinAttackRange: 10
+  MinAttackRange: 15
   MaxAttackRange: 50
   SelectionSprite: {fileID: 184932}
   MiniMapIconSprite: {fileID: 21217196}
@@ -754,7 +754,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AimingTarget: {fileID: 0}
   AttackBullet: {fileID: 118896, guid: ad03e649eb0577b41a280c9062ba8c9f, type: 2}
-  AttackBulletSpeed: 100
+  AttackBulletSpeed: 60
   AttackMinInterval: 5
   BarrelOutput: {fileID: 137858}
   CannonTurret: {fileID: 131264}

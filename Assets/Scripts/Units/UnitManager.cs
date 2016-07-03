@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-//#define OUTPUT_DEBUG
+#define OUTPUT_DEBUG
 
 using UnityEngine;
 using System.Collections;
@@ -45,14 +45,14 @@ namespace Units
         // Internal memory of attack target
         private GameObject attackTarget = null;
 
-        // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
-        private const float permissiveAngleDelta = 1;
-
 
 		void Start ()
 		{
 			InitializeSelectionHighlight();
             InitializeMiniMapIcon();
+
+            // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
+            PermissiveDestinationAngleDelta = 1;
 
             // If the unit is already in the scene when launching the game, setting the destination to the current 
             // position of the GameObject here has the same result as setting it at the variable declaration above.
@@ -109,9 +109,9 @@ namespace Units
         {     
             var towardDestination = destinationRequest - transform.position;
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
-            if (angleFromDestination > permissiveAngleDelta && !towardDestination.Equals(Vector3.zero))
+            if (angleFromDestination > PermissiveDestinationAngleDelta && !towardDestination.Equals(Vector3.zero))
             {                              
-                var rotationDestination = Quaternion.LookRotation(destinationRequest - transform.position, Vector3.up);
+                var rotationDestination = Quaternion.LookRotation(towardDestination, transform.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
                 return false;
             }
@@ -126,12 +126,18 @@ namespace Units
                 UnitManager targetUnitManager = attackTarget.GetComponent<UnitManager>();
                 if (targetUnitManager != null && RespectsAttackTypes(targetUnitManager))
                 {
-                    // If not in range, move to minimum attack range first
+                    #if OUTPUT_DEBUG
+                    #region DEBUG
+                    if (tag == "TemperedHammer") Debug.Log(string.Format("Respect Type + Target ({0})", attackTarget == null));
+                    #endregion
+                    #endif
+
+                    // If not in range, move to minimum/maximum required attack range first
                     if (!InAttackRange(attackTarget))
                     {
                         #if OUTPUT_DEBUG
                         #region DEBUG
-                        Debug.Log("Out of Range - Moving first");
+                        if (tag == "TemperedHammer") Debug.Log(string.Format("Out of Range - Moving first ({0})", attackTarget == null));
                         #endregion
                         #endif
 
@@ -143,7 +149,7 @@ namespace Units
                     {
                         #if OUTPUT_DEBUG
                         #region DEBUG
-                        Debug.Log("In Range - Stop moving");
+                        if (tag == "TemperedHammer") Debug.Log(string.Format("In Range - Stop moving ({0})", attackTarget == null));
                         #endregion
                         #endif
 
@@ -157,7 +163,7 @@ namespace Units
 
             #if OUTPUT_DEBUG
             #region DEBUG
-            Debug.Log("In Range - Attacking");
+            if (tag == "TemperedHammer") Debug.Log("In Range - Attacking");
             #endregion
             #endif
         }
@@ -169,17 +175,18 @@ namespace Units
 		}
 
 
-		private bool InAttackRange(GameObject target) 
+		public bool InAttackRange(GameObject target) 
 		{
-			double distance = (transform.position - target.transform.position).magnitude;
+			double distance = Vector3.Distance(transform.position, target.transform.position);
 			if (distance >= MinAttackRange && distance <= MaxAttackRange) return true;
 			return false;
 		}
 
 
         private Vector3 GetRequiredPositionInRange(GameObject target)
-        {
-            float distance = (transform.position - target.transform.position).magnitude;
+        {            
+            float distance = Vector3.Distance(transform.position, target.transform.position);
+            if (distance < MinAttackRange) return (transform.position - target.transform.position) * MinAttackRange / distance;
             return Vector3.Lerp(target.transform.position, transform.position, MaxAttackRange / distance);
         }
 
@@ -213,6 +220,13 @@ namespace Units
         private void InitializeMiniMapIcon()
         {
             if (MiniMapIconSprite != null) MiniMapIconSprite.color = FactionColor;
+        }
+
+
+        public float PermissiveDestinationAngleDelta
+        {
+            get;
+            private set;
         }
 	}
 }

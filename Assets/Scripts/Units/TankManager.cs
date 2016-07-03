@@ -47,7 +47,7 @@ namespace Units
 
 			AdjustCannonTurretRotation();
 			AdjustCannonBarrelRotation();
-            ExecuteProjectileAnimation();           
+            ExecuteProjectileAnimation();
 		}
 
 
@@ -124,17 +124,29 @@ namespace Units
         private void ExecuteProjectileAnimation()
         {
             // Execute the animation only if a target and projectile were specified, and the delay between shots is over
-            if (AimingTarget != null && AttackBullet != null && currentAttackDelay <= 0)
+            if (AimingTarget != null && unitManager.InAttackRange(AimingTarget) && 
+                AttackBullet != null && currentAttackDelay <= 0)
             {
-                // Get the angle between the barrel and the target
-                // Shoot the projectile only if properly aiming at the target
-                var barrelTowardTarget = CannonBarrel.transform.position - AimingTarget.transform.position;
-                barrelTowardTarget.y = 0;   // Suppress height variation because we want XZ angle
-                var angleAwayFromTarget = Vector3.Angle(barrelTowardTarget, CannonBarrel.transform.forward);
-                Debug.Log(string.Format("Angle: {0}",angleAwayFromTarget));
-                if (angleAwayFromTarget == 0)
-                {   
-                    // Apply required trajectory (arc or linear) according to barrel operation mode
+                // Get the angle between the barrel output and the target
+                var barrelTowardTarget = AimingTarget.transform.position - CannonBarrel.transform.position;
+                var barrelAlongTerrain = BarrelOutput.transform.forward;
+                barrelTowardTarget.y = 0;       // Suppress height variation because we want XZ angle
+                barrelAlongTerrain.y = 0;       // Idem
+                var angleAwayFromTarget = Vector3.Angle(barrelTowardTarget, barrelAlongTerrain);
+
+                // Get the angle between the barrel forward resting position and the current barrel pointing upward
+                var barrelUpwardAngle = Vector3.Angle(transform.forward, BarrelOutput.transform.forward);
+
+                #if OUTPUT_DEBUG
+                #region DEBUG
+                Debug.Log(string.Format("Target Angle: {0}, Upward Angle: {1}",angleAwayFromTarget,barrelUpwardAngle));
+                #endregion
+                #endif
+
+                // Shoot the projectile only if aiming toward the target, and at the right upward angle when applicable
+                // Apply required trajectory (arc or linear) according to barrel operation mode
+                if (angleAwayFromTarget <= unitManager.PermissiveDestinationAngleDelta)
+                {                       
                     if (BarrelAttackAngle == 0)
                     {
                         #if OUTPUT_DEBUG
@@ -145,7 +157,7 @@ namespace Units
 
                         StartCoroutine(LinearProjectileAnimation());
                     }
-                    else
+                    else if (barrelUpwardAngle == BarrelAttackAngle)
                     {
                         #if OUTPUT_DEBUG
                         #region DEBUG
@@ -153,7 +165,7 @@ namespace Units
                         #endregion
                         #endif
 
-                        //################### ARC TRAJECTORY
+                        StartCoroutine(ArcProjectileAnimation());
                     }
 
                     // Reset timer for the next attack allowed
@@ -176,6 +188,40 @@ namespace Units
                 AttackBullet.transform.position = Vector3.MoveTowards(AttackBullet.transform.position, 
                                                                       AimingTarget.transform.position,
                                                                       AttackBulletSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            //Hide the projectile when the target was reached
+            ProjectileVisibility = false;
+        }
+
+
+        private IEnumerator ArcProjectileAnimation()
+        {          
+            // Display the projectile and place it at the barrel exit 
+            ProjectileVisibility = true;
+            AttackBullet.transform.position = BarrelOutput.transform.position;
+            AttackBullet.transform.rotation = BarrelOutput.transform.rotation;
+
+            // Get the starting conditions of the arc trajectory
+            var startPosition = BarrelOutput.transform.position;
+            var endPosition = AimingTarget.transform.position;
+            var initialHeight = BarrelOutput.transform.position.y;
+            var incTime = 0f;
+            Vector3 prevPosition = startPosition;
+
+            while (AttackBullet.transform.position != endPosition)
+            {
+                // Update the new projectile position along the arc trajectory
+                incTime += Time.deltaTime;
+                var currentBulletPosition = Vector3.Lerp(startPosition, endPosition, incTime);
+                currentBulletPosition.y += initialHeight * 2 * Mathf.Sin(Mathf.Clamp01(incTime) * Mathf.PI);
+
+                // Adjust projectile angle to point toward the front following the arc trajectory (tangent)
+                AttackBullet.transform.position = currentBulletPosition;
+                AttackBullet.transform.rotation = Quaternion.LookRotation(currentBulletPosition - prevPosition);
+                prevPosition = currentBulletPosition;   // Update for next tangent calculation
+
                 yield return null;
             }
 

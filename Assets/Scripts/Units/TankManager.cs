@@ -182,7 +182,7 @@ namespace Units
             // Hide the projectile when the target was reached, display the impact effect on the target
             //    Use the current's unit impact effects even if it is the target that gets hit to ensure that each 
             //    projectile gets the corresponding impact on hit, in case that multiple units attack the same target.
-            //    Using the target's effect could interfere with another impact already in occuring and using it, but 
+            //    Using the target's effect could interfere with another impact already occuring and using it, but 
             //    only a single impact can happen at a time for the attacking unit since we limit attacks over a delay.
             ProjectileVisibility = false;
             DisplayProjectileEffect(AttackBullet, ProjectileImpactEffect);

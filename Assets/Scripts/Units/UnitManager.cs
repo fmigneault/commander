@@ -112,7 +112,7 @@ namespace Units
                 MovementEffect.transform.rotation = transform.rotation;
                 StartCoroutine(EffectManager.LoopParticleSystems(MovementEffect));
             }
-            else StartCoroutine(EffectManager.StopParticleSystemsFinishAnimation(MovementEffect));
+            else StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(MovementEffect));
         }
 
 
@@ -124,7 +124,7 @@ namespace Units
             {   
                 // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
                 // the particles suddenly rotate when the next emission is requested as the forward movement resumes
-                StartCoroutine(EffectManager.StopParticleSystemsFinishAnimation(MovementEffect));
+                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(MovementEffect));
 
                 var rotationDestination = Quaternion.LookRotation(towardDestination, transform.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);

@@ -35,8 +35,9 @@ namespace Units
         // Icon used to represent the unit on the Mini-Map
         public SpriteRenderer MiniMapIconSprite = null;
 
-        // Combinations of particle systems used to simulate the destruction of the unit
+        // Combinations of particle systems used to simulate the destruction or movement of the unit
         public GameObject DestroyExplosionEffect = null;
+        public GameObject MovementEffect = null;
 
         // Parameters for building construction (only if "builder" unit)
 		public List<GameObject> ProducedBuildings = null;
@@ -103,7 +104,12 @@ namespace Units
 
         private void UpdateMoveUnit()
         {            
-            transform.position = Vector3.MoveTowards(transform.position, destinationRequest, MovingSpeed * Time.deltaTime);
+            var newPosition = Vector3.MoveTowards(transform.position, destinationRequest, MovingSpeed * Time.deltaTime);
+            if (newPosition != transform.position)
+            {
+                transform.position = newPosition;
+                StartCoroutine(EffectManager.PlayParticleSystems(MovementEffect));
+            }
         }
 
 
@@ -233,11 +239,10 @@ namespace Units
 
 
         private void InitializeParticleEffects()
-        {            
-            if (DestroyExplosionEffect != null)
-            {
-                DestroyExplosionEffect = EffectManager.InitializeParticleSystems(DestroyExplosionEffect);
-            }
+        {
+            // Initialize particle effects to be used with 'EffectManager', or set to null if not possible
+            DestroyExplosionEffect = EffectManager.InitializeParticleSystems(DestroyExplosionEffect);
+            MovementEffect = EffectManager.InitializeParticleSystems(MovementEffect);
         }
 
 

@@ -257,6 +257,8 @@ namespace Units
             {
                 AttackBullet = Instantiate(AttackBullet);
                 ProjectileVisibility = false;
+
+                // Initialize particle effects to be used with 'EffectManager', or set to null if not possible
                 ProjectileImpactEffect = EffectManager.InitializeParticleSystems(ProjectileImpactEffect);
                 ProjectileShootEffect = EffectManager.InitializeParticleSystems(ProjectileShootEffect);
             }

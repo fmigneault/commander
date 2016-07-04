@@ -1,10 +1,11 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj" RefactoringSettings.EnableRefactorings="True">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Cameras\SelectorManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Units\TankManager.cs">
     <Files>
-      <File FileName="Assets\Scripts\Cameras\SelectorManager.cs" Line="43" Column="43" />
-      <File FileName="Assets\Scripts\Units\UnitManager.cs" Line="217" Column="3" />
-      <File FileName="Assets\Scripts\Units\TankManager.cs" Line="132" Column="98" />
+      <File FileName="Assets\Scripts\Units\TankManager.cs" Line="204" Column="66" />
+      <File FileName="Assets\Scripts\Units\UnitManager.cs" Line="24" Column="34" />
+      <File FileName="Assets\Scripts\Cameras\SelectorManager.cs" Line="379" Column="66" />
+      <File FileName="Assets\Scripts\Buildings\BuildingManager.cs" Line="162" Column="22" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

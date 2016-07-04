@@ -391,7 +391,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 179650}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 40, y: 0, z: 20}
+  m_LocalPosition: {x: 20, y: 0, z: 110}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 360, z: 0}
   m_Children:
@@ -740,6 +740,7 @@ MonoBehaviour:
   MaxAttackRange: 50
   SelectionSprite: {fileID: 184932}
   MiniMapIconSprite: {fileID: 21217196}
+  DestroyExplosionEffect: {fileID: 0}
   ProducedBuildings: []
 --- !u!114 &11495446
 MonoBehaviour:
@@ -763,6 +764,10 @@ MonoBehaviour:
   BarrelRotateSpeed: 0
   BarrelLockOnTarget: 0
   BarrelAttackAngle: 0
+  ProjectileImpactEffect: {fileID: 188634, guid: 4efe6ad78452b0b44bfe47a1e3676731,
+    type: 2}
+  ProjectileShootEffect: {fileID: 122214, guid: 1d13307fa7aebd8408cbc36b01ea8920,
+    type: 2}
 --- !u!212 &21217196
 SpriteRenderer:
   m_ObjectHideFlags: 1

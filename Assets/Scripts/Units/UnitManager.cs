@@ -35,7 +35,10 @@ namespace Units
         // Icon used to represent the unit on the Mini-Map
         public SpriteRenderer MiniMapIconSprite = null;
 
-        // Parameters for building construction (only if "construction" unit)
+        // Combinations of particle systems used to simulate the destruction of the unit
+        public GameObject DestroyExplosionEffect = null;
+
+        // Parameters for building construction (only if "builder" unit)
 		public List<GameObject> ProducedBuildings = null;
 
         // Internal memory of requested destination
@@ -46,10 +49,12 @@ namespace Units
         private GameObject attackTarget = null;
 
 
-		void Start ()
+		void Awake()
 		{
+            // Initialize components and visual effects hidden
 			InitializeSelectionHighlight();
             InitializeMiniMapIcon();
+            InitializeParticleEffects();
 
             // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
             PermissiveDestinationAngleDelta = 1;
@@ -57,7 +62,7 @@ namespace Units
             // If the unit is already in the scene when launching the game, setting the destination to the current 
             // position of the GameObject here has the same result as setting it at the variable declaration above.
             // But, if a new unit instance is requested while the game is running, the reference of the unit to be
-            // instanciated will immediately exist while the actual instance will only be generated on the frame.
+            // instanciated will immediately exist while the actual instance will only be generated on the next frame.
             // Therefore, 'MoveToDestination' could be called to set the desired destination, but it would immediately 
             // be overriden by the first 'Start' call when it is instanciated on the next frame.
             // Setting the variable in the 'Start' call resolves the problem no matter when the unit is instanciated.
@@ -92,10 +97,7 @@ namespace Units
         public void AttackTarget(GameObject target)
         {        
             // Do nothing if requested unit to attack is itself    
-            if (target != gameObject)
-            {               
-                attackTarget = target;
-            }
+            if (target != gameObject) attackTarget = target;
         }   
 
 
@@ -227,6 +229,25 @@ namespace Units
         {
             get;
             private set;
+        }
+
+
+        private void InitializeParticleEffects()
+        {            
+            if (DestroyExplosionEffect != null)
+            {
+                DestroyExplosionEffect = EffectManager.InitializeParticleSystems(DestroyExplosionEffect);
+            }
+        }
+
+
+        public void DisplayUnitDestruction()
+        {
+            if (DestroyExplosionEffect != null)
+            {
+                DestroyExplosionEffect.transform.position = transform.position;
+                StartCoroutine(EffectManager.PlayParticleSystems(DestroyExplosionEffect));
+            }
         }
 	}
 }

@@ -12,8 +12,7 @@ using Units;
 using UI;
 
 namespace Cameras
-{
-	[RequireComponent(typeof(RTS_CameraManager))]
+{	
 	public class SelectorManager : MonoBehaviour 
 	{
 		public string[] SelectTags;			// Tags of GameObjects which selection is permitted
@@ -48,8 +47,15 @@ namespace Cameras
 
 		void Start()
 		{            
+            // Get camera components and assert missing references
             cameraRTS = gameObject.GetComponent<RTS_CameraManager>();
 			cam = cameraRTS.GetComponent<Camera>();
+            if (cam == null || cameraRTS == null) 
+            {
+                throw new MissingComponentException("Missing 'Camera' and/or 'RTS_CameraManager' components");
+            }
+
+            // Parameter initialization
             maxDistance = cameraRTS.maxHeight * 10;
 			selectedUnits = new List<GameObject>();
 			ChangeIconPanelVisibility(IconPanel, false);

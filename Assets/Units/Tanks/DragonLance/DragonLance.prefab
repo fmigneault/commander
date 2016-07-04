@@ -676,6 +676,7 @@ MonoBehaviour:
   MaxAttackRange: 40
   SelectionSprite: {fileID: 171136}
   MiniMapIconSprite: {fileID: 21234818}
+  DestroyExplosionEffect: {fileID: 0}
   ProducedBuildings: []
 --- !u!114 &11478242
 MonoBehaviour:
@@ -699,6 +700,10 @@ MonoBehaviour:
   BarrelRotateSpeed: 0
   BarrelLockOnTarget: 0
   BarrelAttackAngle: 0
+  ProjectileImpactEffect: {fileID: 188634, guid: 4efe6ad78452b0b44bfe47a1e3676731,
+    type: 2}
+  ProjectileShootEffect: {fileID: 122214, guid: 1d13307fa7aebd8408cbc36b01ea8920,
+    type: 2}
 --- !u!212 &21207606
 SpriteRenderer:
   m_ObjectHideFlags: 1

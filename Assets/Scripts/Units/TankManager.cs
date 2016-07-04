@@ -1,12 +1,11 @@
 ﻿// Display debugging/logging info on console
-#define OUTPUT_DEBUG
+//#define OUTPUT_DEBUG
 
 using UnityEngine;
 using System.Collections;
 
 namespace Units 
-{	
-	[RequireComponent(typeof(UnitManager))]
+{		
 	public class TankManager : MonoBehaviour
 	{		        
 		public GameObject AimingTarget;		// Specify a location to make the cannon look at (ennemy, building, default: forward if null)
@@ -21,26 +20,32 @@ namespace Units
 		public bool BarrelLockOnTarget;		// Specify if the barrel needs to aim at the target to attack
 		public float BarrelAttackAngle;		// Required angle of barrel to attack
 
+        // Combinations of particle systems used to simulate a projectile impact/shooting toward a target unit
+        // Specify different hit impact effects according to trajectory types
+        public GameObject ProjectileImpactEffect = null;
+        public GameObject ProjectileShootEffect = null;
+
 		private UnitManager unitManager;
 		private float barrelRotationDelta;
         private float currentAttackDelay = 0;
 
+        // Trajectory function type
+        private delegate IEnumerator Trajectory();
 
-		void Awake ()
+
+		void Awake()
 		{
+            // Reference validation
 			unitManager = GetComponent<UnitManager>();
-			barrelRotationDelta = BarrelRotateSpeed * Time.deltaTime;
+            if (unitManager == null) throw new MissingComponentException("Missing 'UnitManager' component");
 
-            // Instanciate bullet from reference prefab and hide it
-            if (AttackBullet != null)
-            {
-                AttackBullet = Instantiate(AttackBullet);
-                ProjectileVisibility = false;
-            }
+            // Initialize parameters and display
+			barrelRotationDelta = BarrelRotateSpeed * Time.deltaTime;
+            InitializeProjectileAndEffects();
 		}
 
 
-		void Update ()
+		void Update()
 		{				            
             // Update attack timer
             currentAttackDelay = Mathf.Clamp(currentAttackDelay - Time.deltaTime, 0, currentAttackDelay);
@@ -149,23 +154,11 @@ namespace Units
                 {                       
                     if (BarrelAttackAngle == 0)
                     {
-                        #if OUTPUT_DEBUG
-                        #region DEBUG
-                        Debug.Log("FIRE LIN!");
-                        #endregion
-                        #endif
-
-                        StartCoroutine(LinearProjectileAnimation());
+                        StartCoroutine(ProjectileAnimation(LinearTrajectory));
                     }
                     else if (barrelUpwardAngle == BarrelAttackAngle)
                     {
-                        #if OUTPUT_DEBUG
-                        #region DEBUG
-                        Debug.Log("FIRE ARC!");
-                        #endregion
-                        #endif
-
-                        StartCoroutine(ArcProjectileAnimation());
+                        StartCoroutine(ProjectileAnimation(ArcTrajectory));
                     }
 
                     // Reset timer for the next attack allowed
@@ -175,34 +168,29 @@ namespace Units
         }
 
 
-        private IEnumerator LinearProjectileAnimation()
+        private IEnumerator ProjectileAnimation(Trajectory trajectory)
         {
             // Display the projectile and place it at the barrel exit 
             ProjectileVisibility = true;
             AttackBullet.transform.position = BarrelOutput.transform.position;
             AttackBullet.transform.rotation = BarrelOutput.transform.rotation;
+            DisplayProjectileEffect(AttackBullet, ProjectileShootEffect);
 
-            // Linear trajectory of the projectile until the target is reached
-            while (AttackBullet.transform.position != AimingTarget.transform.position)
-            {
-                AttackBullet.transform.position = Vector3.MoveTowards(AttackBullet.transform.position, 
-                                                                      AimingTarget.transform.position,
-                                                                      AttackBulletSpeed * Time.deltaTime);
-                yield return null;
-            }
+            // Execute the trajectory animation
+            yield return trajectory();
 
-            //Hide the projectile when the target was reached
+            // Hide the projectile when the target was reached, display the impact effect on the target
+            //    Use the current's unit impact effects even if it is the target that gets hit to ensure that each 
+            //    projectile gets the corresponding impact on hit, in case that multiple units attack the same target.
+            //    Using the target's effect could interfere with another impact already in occuring and using it, but 
+            //    only a single impact can happen at a time for the attacking unit since we limit attacks over a delay.
             ProjectileVisibility = false;
+            DisplayProjectileEffect(AttackBullet, ProjectileImpactEffect);
         }
 
 
-        private IEnumerator ArcProjectileAnimation()
-        {          
-            // Display the projectile and place it at the barrel exit 
-            ProjectileVisibility = true;
-            AttackBullet.transform.position = BarrelOutput.transform.position;
-            AttackBullet.transform.rotation = BarrelOutput.transform.rotation;
-
+        IEnumerator ArcTrajectory() 
+        {
             // Get the starting conditions of the arc trajectory
             var startPosition = BarrelOutput.transform.position;
             var endPosition = AimingTarget.transform.position;
@@ -212,8 +200,12 @@ namespace Units
 
             while (AttackBullet.transform.position != endPosition)
             {
+                // Get the time interval
+                //    DeltaTime could simply be used, but to allow variations of projectile speed using the input 
+                //    parameter, we use it as a proportion of 100, which is around the same speeds for linear trajectory
+                incTime += Time.deltaTime * AttackBulletSpeed / 100;
+
                 // Update the new projectile position along the arc trajectory
-                incTime += Time.deltaTime;
                 var currentBulletPosition = Vector3.Lerp(startPosition, endPosition, incTime);
                 currentBulletPosition.y += initialHeight * 2 * Mathf.Sin(Mathf.Clamp01(incTime) * Mathf.PI);
 
@@ -224,9 +216,50 @@ namespace Units
 
                 yield return null;
             }
+        }
 
-            //Hide the projectile when the target was reached
-            ProjectileVisibility = false;
+
+        IEnumerator LinearTrajectory() 
+        {
+            // Linear trajectory of the projectile until the target is reached
+            //    Use a temporary target reference since another command received like moving the unit while the attack
+            //    animation has already started will set the reference to null and cause an error, in turn not hiding 
+            //    the projectile and creating the impact effect.
+            var aimingTargetPosition = AimingTarget.transform.position;
+            while (AttackBullet.transform.position != aimingTargetPosition)
+            {
+                AttackBullet.transform.position = Vector3.MoveTowards(AttackBullet.transform.position,
+                                                                      aimingTargetPosition, 
+                                                                      AttackBulletSpeed * Time.deltaTime);
+                yield return null;
+            }
+        }
+
+
+        // Displays the projectile effect at the current location of the specified projectile
+        private void DisplayProjectileEffect(GameObject projectile, GameObject effect)
+        {
+            if (projectile != null && effect != null)
+            {
+                // Set the impact position and orientation according to the projectile direction, the display effects
+                effect.transform.position = projectile.transform.position;
+                effect.transform.rotation = projectile.transform.rotation;
+                StartCoroutine(EffectManager.PlayParticleSystems(effect));
+            }
+        }
+
+
+        private void InitializeProjectileAndEffects()
+        {
+            // Instanciate projectile from reference prefab and hide it
+            // Instanciate projectile effects only if a projectile was specified, otherwise they are not required
+            if (AttackBullet != null)
+            {
+                AttackBullet = Instantiate(AttackBullet);
+                ProjectileVisibility = false;
+                ProjectileImpactEffect = EffectManager.InitializeParticleSystems(ProjectileImpactEffect);
+                ProjectileShootEffect = EffectManager.InitializeParticleSystems(ProjectileShootEffect);
+            }
         }
 	}
 }

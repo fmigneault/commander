@@ -117,6 +117,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &164992
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 472726}
+  m_Layer: 0
+  m_Name: Output
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &166786
 GameObject:
   m_ObjectHideFlags: 1
@@ -145,6 +160,22 @@ GameObject:
   - 212: {fileID: 21207606}
   m_Layer: 0
   m_Name: SelectionHighlight
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &188026
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 475914}
+  - 212: {fileID: 21234818}
+  m_Layer: 8
+  m_Name: MapIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -200,7 +231,7 @@ Transform:
   - {fileID: 444056}
   - {fileID: 474944}
   m_Father: {fileID: 429936}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!4 &413450
 Transform:
   m_ObjectHideFlags: 1
@@ -213,7 +244,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 429936}
-  m_RootOrder: 0
+  m_RootOrder: 1
 --- !u!4 &429178
 Transform:
   m_ObjectHideFlags: 1
@@ -247,10 +278,11 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 111712}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10, y: 0.0477, z: 20}
+  m_LocalPosition: {x: 20, y: 0, z: 20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
+  - {fileID: 475914}
   - {fileID: 413450}
   - {fileID: 436176}
   - {fileID: 403062}
@@ -271,7 +303,7 @@ Transform:
   - {fileID: 429178}
   - {fileID: 429414}
   m_Father: {fileID: 429936}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!4 &437920
 Transform:
   m_ObjectHideFlags: 1
@@ -298,6 +330,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 403062}
   m_RootOrder: 2
+--- !u!4 &472726
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 164992}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000016292068}
+  m_LocalPosition: {x: 0, y: 1.99, z: -5.075}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_Children: []
+  m_Father: {fileID: 485364}
+  m_RootOrder: 0
 --- !u!4 &474944
 Transform:
   m_ObjectHideFlags: 1
@@ -311,6 +356,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 403062}
   m_RootOrder: 3
+--- !u!4 &475914
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 188026}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071067}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalScale: {x: 100, y: 100, z: 1}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 429936}
+  m_RootOrder: 0
 --- !u!4 &480014
 Transform:
   m_ObjectHideFlags: 1
@@ -333,8 +391,9 @@ Transform:
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000016292068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
+  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+  m_Children:
+  - {fileID: 472726}
   m_Father: {fileID: 403062}
   m_RootOrder: 1
 --- !u!23 &2303988
@@ -606,16 +665,18 @@ MonoBehaviour:
   Name: Dragon Lance
   Code: Type-99 WZ-213 LT
   FactionColor: {r: 1, g: 0, b: 0, a: 1}
-  IsGroundUnit: 0
+  IsGroundUnit: 1
   IsAirUnit: 0
   ProductionDelay: 8
-  MovingSpeed: 10
+  MovingSpeed: 15
   RotationSpeed: 45
   CanAttackGround: 1
   CanAttackAir: 0
-  MinAttackRange: 5
+  MinAttackRange: 15
   MaxAttackRange: 40
   SelectionSprite: {fileID: 171136}
+  MiniMapIconSprite: {fileID: 21234818}
+  DestroyExplosionEffect: {fileID: 0}
   ProducedBuildings: []
 --- !u!114 &11478242
 MonoBehaviour:
@@ -629,12 +690,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AimingTarget: {fileID: 0}
+  AttackBullet: {fileID: 118896, guid: ad03e649eb0577b41a280c9062ba8c9f, type: 2}
+  AttackBulletSpeed: 90
+  AttackMinInterval: 2
+  BarrelOutput: {fileID: 164992}
   CannonTurret: {fileID: 118102}
   CannonBarrel: {fileID: 199704}
   CannonRotateSpeed: 120
   BarrelRotateSpeed: 0
   BarrelLockOnTarget: 0
   BarrelAttackAngle: 0
+  ProjectileImpactEffect: {fileID: 188634, guid: 4efe6ad78452b0b44bfe47a1e3676731,
+    type: 2}
+  ProjectileShootEffect: {fileID: 122214, guid: 1d13307fa7aebd8408cbc36b01ea8920,
+    type: 2}
 --- !u!212 &21207606
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -662,6 +731,36 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 4aa50bad5f62a064a90f8661c8be901b, type: 3}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+--- !u!212 &21234818
+SpriteRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 188026}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000e000000000000000, type: 0}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_UseLightProbes: 0
+  m_ReflectionProbeUsage: 0
+  m_ProbeAnchor: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0

@@ -181,6 +181,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &186516
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 467676}
+  m_Layer: 11
+  m_Name: Output
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &186634
 GameObject:
   m_ObjectHideFlags: 1
@@ -264,7 +279,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 183634}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10, y: 0.0579, z: 20}
+  m_LocalPosition: {x: 36.8, y: 0, z: 120}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
@@ -329,6 +344,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 403340}
+  - {fileID: 467676}
   m_Father: {fileID: 414710}
   m_RootOrder: 0
 --- !u!4 &450404
@@ -344,6 +360,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 417040}
   m_RootOrder: 0
+--- !u!4 &467676
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 186516}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.14, z: 6.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 443192}
+  m_RootOrder: 1
 --- !u!4 &487240
 Transform:
   m_ObjectHideFlags: 1
@@ -651,12 +680,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AimingTarget: {fileID: 0}
+  AttackBullet: {fileID: 118896, guid: ad03e649eb0577b41a280c9062ba8c9f, type: 2}
+  AttackBulletSpeed: 100
+  AttackMinInterval: 8
+  BarrelOutput: {fileID: 186516}
   CannonTurret: {fileID: 177332}
   CannonBarrel: {fileID: 133094}
   CannonRotateSpeed: 0
   BarrelRotateSpeed: 45
   BarrelLockOnTarget: 0
   BarrelAttackAngle: 45
+  ProjectileImpactEffect: {fileID: 170150, guid: 5efa95f7b0c966d4aa32a155b1df7e70,
+    type: 2}
+  ProjectileShootEffect: {fileID: 122214, guid: 1d13307fa7aebd8408cbc36b01ea8920,
+    type: 2}
 --- !u!114 &11445532
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -674,7 +711,7 @@ MonoBehaviour:
   IsGroundUnit: 1
   IsAirUnit: 0
   ProductionDelay: 16
-  MovingSpeed: 10
+  MovingSpeed: 6
   RotationSpeed: 45
   CanAttackGround: 1
   CanAttackAir: 0
@@ -682,6 +719,7 @@ MonoBehaviour:
   MaxAttackRange: 60
   SelectionSprite: {fileID: 117410}
   MiniMapIconSprite: {fileID: 21239172}
+  DestroyExplosionEffect: {fileID: 0}
   ProducedBuildings: []
 --- !u!114 &11465964
 MonoBehaviour:

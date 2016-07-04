@@ -113,6 +113,7 @@ namespace Cameras
 
         public bool useMouseRotationSecondaryKey = true;
         public KeyCode mouseRotationSecondaryKey = KeyCode.LeftControl;
+        public KeyCode mouseRotationSecondaryKeyOther = KeyCode.RightControl;
 
         private Vector2 KeyboardInput
         {
@@ -293,7 +294,8 @@ namespace Cameras
             // Movement only if using mouse rotation and key is held down
             // Or if both the mouse rotation and secondary keys are held down if using secondary key option
             if (useMouseRotation && Input.GetKey(mouseRotationKey) &&
-                (!useMouseRotationSecondaryKey || Input.GetKey(mouseRotationSecondaryKey)))
+                (!useMouseRotationSecondaryKey || 
+                 Input.GetKey(mouseRotationSecondaryKey) || Input.GetKey(mouseRotationSecondaryKeyOther)))
             {				
                 IsRotatingWithMouse = true;
 

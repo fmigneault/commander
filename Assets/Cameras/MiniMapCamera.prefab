@@ -1,17 +1,17 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &141336
+--- !u!1 &149300
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22421752}
-  - 20: {fileID: 2033046}
-  - 124: {fileID: 12492024}
-  - 92: {fileID: 9263494}
-  - 114: {fileID: 11436488}
+  - 224: {fileID: 22426540}
+  - 20: {fileID: 2008648}
+  - 124: {fileID: 12448128}
+  - 92: {fileID: 9247418}
+  - 114: {fileID: 11461818}
   m_Layer: 5
   m_Name: MiniMapCamera
   m_TagString: MiniMapCamera
@@ -19,12 +19,12 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!20 &2033046
+--- !u!20 &2008648
 Camera:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141336}
+  m_GameObject: {fileID: 149300}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -36,7 +36,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 50
+  far clip plane: 100
   field of view: 22.663977
   orthographic: 1
   orthographic size: 200
@@ -53,43 +53,45 @@ Camera:
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
   m_StereoMirrorMode: 0
---- !u!92 &9263494
+--- !u!92 &9247418
 Behaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141336}
+  m_GameObject: {fileID: 149300}
   m_Enabled: 1
---- !u!114 &11436488
+--- !u!114 &11461818
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141336}
+  m_GameObject: {fileID: 149300}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 734ded76db4d9ef4fb84b7c2555a8d9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GroundTerrain: {fileID: 21877552, guid: 588b8a054f723494fa9a4e7581a2a902, type: 2}
+  GroundTerrain: {fileID: 0}
   MinimapPosition: {fileID: 0}
---- !u!124 &12492024
+  CameraMiniMap: {fileID: 2008648}
+  CameraRTS: {fileID: 0}
+--- !u!124 &12448128
 Behaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141336}
+  m_GameObject: {fileID: 149300}
   m_Enabled: 0
---- !u!224 &22421752
+--- !u!224 &22426540
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141336}
+  m_GameObject: {fileID: 149300}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071067}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 89.980194, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -107,5 +109,5 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 141336}
+  m_RootGameObject: {fileID: 149300}
   m_IsPrefabParent: 1

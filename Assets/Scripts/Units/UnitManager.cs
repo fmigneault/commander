@@ -108,8 +108,11 @@ namespace Units
             if (newPosition != transform.position)
             {
                 transform.position = newPosition;
-                StartCoroutine(EffectManager.PlayParticleSystems(MovementEffect));
+                MovementEffect.transform.position = newPosition;
+                MovementEffect.transform.rotation = transform.rotation;
+                StartCoroutine(EffectManager.LoopParticleSystems(MovementEffect));
             }
+            else StartCoroutine(EffectManager.StopParticleSystemsFinishAnimation(MovementEffect));
         }
 
 
@@ -118,7 +121,11 @@ namespace Units
             var towardDestination = destinationRequest - transform.position;
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
             if (angleFromDestination > PermissiveDestinationAngleDelta && !towardDestination.Equals(Vector3.zero))
-            {                              
+            {   
+                // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
+                // the particles suddenly rotate when the next emission is requested as the forward movement resumes
+                StartCoroutine(EffectManager.StopParticleSystemsFinishAnimation(MovementEffect));
+
                 var rotationDestination = Quaternion.LookRotation(towardDestination, transform.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
                 return false;

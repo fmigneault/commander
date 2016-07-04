@@ -42,17 +42,83 @@ namespace Units
 
                 // Activate to start all ParticleSystem animation effects
                 parentContainer.SetActive(true);
+                yield return StopParticleSystemsFinishAnimation(parentContainer);
+            }
+        }
+
+
+        public static IEnumerator LoopParticleSystems(GameObject parentContainer)
+        {
+
+            Debug.Log(string.Format("Name: {0}, Active? {1}", parentContainer.name, parentContainer.activeSelf));
+            foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
+            {                    
+                Debug.Log(string.Format("Name: {0}, Loop? {1}, Time: {2}", ps.name, ps.loop, ps.time));
+            }
+
+
+
+            // If the effect is a looping effect, let it continue by itself
+            if (!parentContainer.activeSelf) parentContainer.SetActive(true);
+            foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
+            {
+                if (!ps.isPlaying)
+                {                   
+                    ps.loop = true;
+                    ps.Play();
+                }
+            }
+            yield return null;
+        }
+
+
+        // Immediately stops the animations (event if not finished) by disabling the ParticleSystems
+        public static void StopParticleSystemsImmediate(GameObject parentContainer) 
+        {
+            if (parentContainer != null && parentContainer.activeSelf) parentContainer.SetActive(false);
+        }
+
+
+        // Waits for the animations to complete before disabling the ParticleSystems
+        public static IEnumerator StopParticleSystemsFinishAnimation(GameObject parentContainer) 
+        {
+            if (parentContainer != null && parentContainer.activeSelf)
+            {
+                // Stop particle emission for progressive stop of the animations (in case of looping effects)
+                SetEmissionStatus(parentContainer, false);
 
                 // Get the maximum delay to wait to ensure all animations have enough time to complete
-                float maxTime = 0;
-                foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>()) 
-                {           
-                    maxTime = Mathf.Max(ps.duration, maxTime);
-                }
-                yield return new WaitForSeconds(maxTime);
+                float maxDelay = GetMaximumDuration(parentContainer);
+                yield return new WaitForSeconds(maxDelay);               
 
+                // Reset emission for next call
                 // Disable the containing GameObject to display the effects on the next activation (PlayOnAwake)
+                SetEmissionStatus(parentContainer, true);
                 parentContainer.SetActive(false);
+            }
+        }
+
+
+        private static float GetMaximumDuration(GameObject parentContainer) 
+        {
+            float maxTime = 0;
+            foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
+            {           
+                maxTime = Mathf.Max(ps.duration, maxTime);
+            }
+            return maxTime;
+        }
+
+
+        private static void SetEmissionStatus(GameObject parentContainer, bool status)
+        {
+            foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
+            {
+                if (ps.loop && ps.isPlaying)
+                {
+                    var em = ps.emission;
+                    em.enabled = status;
+                }
             }
         }
     }        

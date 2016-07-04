@@ -7420,7 +7420,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 104874}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 110.19998, y: 0, z: 29.038668}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
@@ -16675,6 +16675,8 @@ MonoBehaviour:
   MaxAttackRange: 0
   SelectionSprite: {fileID: 195588}
   MiniMapIconSprite: {fileID: 21252974}
+  DestroyExplosionEffect: {fileID: 0}
+  MovementEffect: {fileID: 139534, guid: 36f8cfe6d16a22144b830d86d8c09d3c, type: 2}
   ProducedBuildings:
   - {fileID: 184958, guid: 842104dbf21057e49ba8da1c35b61344, type: 2}
 --- !u!114 &11498112

@@ -764,9 +764,14 @@ MonoBehaviour:
   ProductionDelay: 10
   MovingSpeed: 10
   RotationSpeed: 45
+  DestructionMinimumDelay: 5
+  AfterDestructionDelay: 4
+  DestructionTranlateSpeed: 0.01
+  DestructionTranlateOffset: 4
   SelectionSprite: {fileID: 109398}
   MiniMapIconSprite: {fileID: 21200834}
-  DestroyExplosionEffect: {fileID: 0}
+  DestroyExplosionEffect: {fileID: 133986, guid: 288dd81c2a202bb45a9cbe820542f921,
+    type: 2}
   MovementEffect: {fileID: 139534, guid: 36f8cfe6d16a22144b830d86d8c09d3c, type: 2}
   ProducedBuildings: []
 --- !u!212 &21200834

@@ -26,15 +26,20 @@ namespace Units
         public int Health = 100;
         public int HitPoints = 10;
 
-        // Minimum delay to destroy a unit instance (in case the explosion / destruction effect isn't long enough)
-        public float MinimumDestructionDelay = 5;
-
         // Unit production parameters
         public float ProductionDelay = 0; 
 
         // Movement parameters
         public float MovingSpeed = 0;
         public float RotationSpeed = 0;
+
+        // Delays for unit destuction 
+        public float DestructionMinimumDelay = 5;   // Minimum (in case the destruction effect is not specified)
+        public float AfterDestructionDelay = 4;     // Delay to wait after the effects stop emitting
+
+        // Speed at which the unit will translate by the offset value through the ground until disappearing
+        public float DestructionTranlateSpeed = 0.01f;
+        public float DestructionTranlateOffset = 4;
 
 		// Selected unit highlight on ground reference
 		public GameObject SelectionSprite = null;
@@ -57,7 +62,7 @@ namespace Units
         private GameObject attackTarget = null;
 
         // To allow displaying effects on multiple subsequent movemnets, we require more than one effect instance
-        //    Using only one instance sometimes makes it disapear suddenly, because following movement require the 
+        //    Using only one instance sometimes makes it  suddenly, because following movement require the 
         //    effect faster than it can complete it's previous call. Therefore, we use a list of available effects
         //    that we gradually cycle through upon each new movement.
         private const int totalMovementEffects = 5;         // Quantity of ParticleSystem effects to instanciate
@@ -148,7 +153,7 @@ namespace Units
             }
             else
             {
-                // Stop emitting new particles for reached destination, the ones already emitted will gradually disapear
+                // Stop emitting new particles for reached destination, already emitted ones will gradually disappear
                 if (movementEffects != null)
                 {
                     var activeEffect = movementEffects[activeMovementEffect];
@@ -286,12 +291,28 @@ namespace Units
 
             // Find all sub-parts of the unit to have their color values adjusted
             var unitParts = gameObject.GetComponentsInChildren<MeshRenderer>();
-            foreach (var part in unitParts) part.material.color *= destroyColorMultiplier;
+            foreach (var part in unitParts) foreach (var mat in part.materials) mat.color *= destroyColorMultiplier;
 
             // Display the destruction effect and wait for it to complete before destroying the unit (or minimum delay)
-            var delay = Mathf.Max(MinimumDestructionDelay, EffectManager.GetMaximumDuration(DestroyExplosionEffect));
-            DisplayUnitDestructionEffect();
-            yield return new WaitForSeconds(delay);
+            if (DestroyExplosionEffect != null)
+            {     
+                var delay = Mathf.Max(DestructionMinimumDelay, EffectManager.GetMaximumDuration(DestroyExplosionEffect));
+                DestroyExplosionEffect.transform.position = transform.position;
+                StartCoroutine(EffectManager.LoopParticleSystems(DestroyExplosionEffect));
+                yield return new WaitForSeconds(delay);
+                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(DestroyExplosionEffect));
+            }
+            yield return new WaitForSeconds(AfterDestructionDelay);
+
+            // Translate the unit through the terrain to make it disappear
+            var destroyTranslatePosition = transform.position;
+            destroyTranslatePosition.y -= DestructionTranlateOffset;
+            while (transform.position != destroyTranslatePosition)
+            {                
+                transform.position = Vector3.MoveTowards(transform.position, destroyTranslatePosition, 
+                                                         DestructionTranlateSpeed * Time.fixedDeltaTime);
+                yield return new WaitForFixedUpdate();
+            }
 
             // Destroy all instanciated references, then destoy the actual unit
             DestroyInstanciatedReferences();
@@ -348,16 +369,6 @@ namespace Units
             foreach (var effect in movementEffects) if (effect != null) Destroy(effect);
             if (DestroyExplosionEffect != null) Destroy(DestroyExplosionEffect);
             if (tag == "Tank") GetComponent<TankManager>().DestroyInstanciatedReferences();
-        }
-
-
-        public void DisplayUnitDestructionEffect()
-        {
-            if (DestroyExplosionEffect != null)
-            {
-                DestroyExplosionEffect.transform.position = transform.position;
-                StartCoroutine(EffectManager.PlayParticleSystems(DestroyExplosionEffect));
-            }
         }
 	}
 }

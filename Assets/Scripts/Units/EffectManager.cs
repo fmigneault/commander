@@ -40,7 +40,7 @@ namespace Units
                 // call intervals (ParticleSystem should be modified in the Editor to reduce start/end life time)
                 if (parentContainer.activeSelf) parentContainer.SetActive(false);
 
-                // Activate to start all ParticleSystem animation effects
+                // Activate to start all ParticleSystem animation effects and wait for them to complete
                 parentContainer.SetActive(true);
                 yield return StopParticleSystemsCompleteAnimation(parentContainer);
             }
@@ -49,18 +49,21 @@ namespace Units
 
         public static IEnumerator LoopParticleSystems(GameObject parentContainer)
         {
-            // If the effect is a looping effect, let it continue by itself
-            SetEmissionStatus(parentContainer, true);
-            if (!parentContainer.activeSelf) parentContainer.SetActive(true);
-            foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
-            {                
-                if (!ps.isPlaying)
-                {                   
-                    ps.loop = true;
-                    ps.Play();
+            if (parentContainer != null)
+            {
+                // If the effect is a looping effect, let it continue by itself
+                SetEmissionStatus(parentContainer, true);
+                if (!parentContainer.activeSelf) parentContainer.SetActive(true);
+                foreach (var ps in parentContainer.GetComponentsInChildren<ParticleSystem>())
+                {                
+                    if (!ps.isPlaying)
+                    {
+                        ps.loop = true;
+                        ps.Play();
+                    }
                 }
+                yield return null;
             }
-            yield return null;
         }
 
 
@@ -71,7 +74,7 @@ namespace Units
         }
 
 
-        // Waits for the animations to complete before disabling the ParticleSystems
+        // Waits for the already emitted particles to complete their animation before disabling the ParticleSystems
         public static IEnumerator StopParticleSystemsCompleteAnimation(GameObject parentContainer) 
         {
             if (parentContainer != null && parentContainer.activeSelf)

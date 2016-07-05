@@ -20,10 +20,9 @@ namespace Cameras
 		public string BuilderTag;		    // Tag of GameObjects which are builder units
 		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
 
-		// GUI Icon Panel
-		public GameObject IconPanel;        // Contains the icons to display the creatable units or buildings 
-
-        // GUI Selection Box
+		// GUI Elements
+        public Canvas CanvasGUI;            // The overall canvas reference
+		public GameObject IconPanel;        // Contains the icons to display the creatable units or buildings      
         public GameObject SelectionBox;     // Rectangle image for region selection of units
 
         // Terrain
@@ -74,7 +73,7 @@ namespace Cameras
             //   Update the displayed region while mouse is dragged and maintaining key pressed
             //   Get the units within the selection region when the mouse key is released
             if (Input.GetKeyDown(UnitSelectionKey))
-            {
+            {                
                 previousMousePositon = mousePosition;
             }
             else if (Input.GetKey(UnitSelectionKey) && mousePosition != previousMousePositon)
@@ -326,6 +325,8 @@ namespace Cameras
             var startPosition = new Vector2(previousMousePositon.x, previousMousePositon.y);
 
             // Calculate the box dimensions, adjust the values according to signs to display properly
+            //    Scaling according to screen width/height is required since the canvas scaler changes dynamically
+            //    Since the position and size are always positive, we need to offset the box for reverse positions
             var differenceArea = currentMousePosition - previousMousePositon;
             if (differenceArea.x < 0)
             {
@@ -336,10 +337,12 @@ namespace Cameras
             {
                 differenceArea.y = -differenceArea.y;
                 startPosition.y -= differenceArea.y;
-            }
+            }       
+            differenceArea.x /= CanvasGUI.transform.localScale.x;
+            differenceArea.y /= CanvasGUI.transform.localScale.y;
               
             // Update the transformation values and activate the selection box to show it on screen
-            region.position = new Vector2(startPosition.x, startPosition.y);
+            region.position = new Vector3(startPosition.x, startPosition.y, 0);
             region.sizeDelta = new Vector2(differenceArea.x, differenceArea.y);
             SelectionBox.SetActive(true);
         }

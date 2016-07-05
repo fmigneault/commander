@@ -720,6 +720,7 @@ MonoBehaviour:
   SelectionSprite: {fileID: 117410}
   MiniMapIconSprite: {fileID: 21239172}
   DestroyExplosionEffect: {fileID: 0}
+  MovementEffect: {fileID: 139534, guid: 36f8cfe6d16a22144b830d86d8c09d3c, type: 2}
   ProducedBuildings: []
 --- !u!114 &11465964
 MonoBehaviour:

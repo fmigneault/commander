@@ -252,7 +252,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100154}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 20}
+  m_LocalPosition: {x: 61.680935, y: 0, z: 44.334}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
@@ -727,12 +727,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AimingTarget: {fileID: 0}
+  AttackBullet: {fileID: 0}
+  AttackBulletSpeed: 0
+  AttackMinInterval: 0
+  BarrelOutput: {fileID: 0}
   CannonTurret: {fileID: 171834}
   CannonBarrel: {fileID: 143264}
   CannonRotateSpeed: 150
   BarrelRotateSpeed: 150
   BarrelLockOnTarget: 1
   BarrelAttackAngle: 0
+  ProjectileImpactEffect: {fileID: 0}
+  ProjectileShootEffect: {fileID: 0}
 --- !u!114 &11458872
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -758,6 +764,8 @@ MonoBehaviour:
   MaxAttackRange: 50
   SelectionSprite: {fileID: 109398}
   MiniMapIconSprite: {fileID: 21200834}
+  DestroyExplosionEffect: {fileID: 0}
+  MovementEffect: {fileID: 139534, guid: 36f8cfe6d16a22144b830d86d8c09d3c, type: 2}
   ProducedBuildings: []
 --- !u!212 &21200834
 SpriteRenderer:

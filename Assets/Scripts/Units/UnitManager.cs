@@ -49,6 +49,15 @@ namespace Units
         // Internal memory of attack target
         private GameObject attackTarget = null;
 
+        // To allow displaying effects on multiple subsequent movemnets, we require more than one effect instance
+        //    Using only one instance sometimes makes it disapear suddenly, because following movement require the 
+        //    effect faster than it can complete it's previous call. Therefore, we use a list of available effects
+        //    that we gradually cycle through upon each new movement.
+        private int totalMovementEffects = 5;       // Quantity of ParticleSystem effects to instanciate
+        private int activeMovementEffect = 0;       // Control variable to cycle through the effects as neede
+        private bool previousMovement = false;      // Control variable to switch to the next effect
+        private List<GameObject> movementEffects;   // List of instanciated ParticleSystems
+
 
 		void Awake()
 		{
@@ -103,34 +112,48 @@ namespace Units
 
 
         private void UpdateMoveUnit()
-        {            
+        {     
+            // Calculate the new intermediate position toward the destination and update accordingly
             var newPosition = Vector3.MoveTowards(transform.position, destinationRequest, MovingSpeed * Time.deltaTime);
             if (newPosition != transform.position)
             {
-                transform.position = newPosition;
-                MovementEffect.transform.position = newPosition;
-                MovementEffect.transform.rotation = transform.rotation;
-                StartCoroutine(EffectManager.LoopParticleSystems(MovementEffect));
+                previousMovement = true;            // Indicate the unit is in movement
+                transform.position = newPosition;   // Adjust the intermediate new position toward the destination
+
+                // Move, rotate and display the movement effects at the current unit location
+                movementEffects[activeMovementEffect].transform.position = newPosition; 
+                movementEffects[activeMovementEffect].transform.rotation = transform.rotation;
+                StartCoroutine(EffectManager.LoopParticleSystems(movementEffects[activeMovementEffect]));
             }
-            else StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(MovementEffect));
+            else
+            {
+                // Stop emitting new particles for reached destination, the ones already emitted will gradually disapear
+                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(movementEffects[activeMovementEffect]));
+            }
         }
 
 
         private bool UpdateRotateUnit()
         {     
+            // Calculate the new intermediate rotation toward the destination and update accordingly
             var towardDestination = destinationRequest - transform.position;
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
             if (angleFromDestination > PermissiveDestinationAngleDelta && !towardDestination.Equals(Vector3.zero))
             {   
                 // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
                 // the particles suddenly rotate when the next emission is requested as the forward movement resumes
-                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(MovementEffect));
+                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(movementEffects[activeMovementEffect]));
 
+                // Update the control variables for following frames that could require particle emission with movement
+                if (previousMovement) activeMovementEffect = ++activeMovementEffect % totalMovementEffects;
+                previousMovement = false;
+
+                // Apply the intermediate rotation toward the target destination
                 var rotationDestination = Quaternion.LookRotation(towardDestination, transform.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
                 return false;
             }
-            return true;
+            return true;    // Finished rotation (already pointing toward target)
         }
 
 
@@ -249,7 +272,11 @@ namespace Units
         {
             // Initialize particle effects to be used with 'EffectManager', or set to null if not possible
             DestroyExplosionEffect = EffectManager.InitializeParticleSystems(DestroyExplosionEffect);
-            MovementEffect = EffectManager.InitializeParticleSystems(MovementEffect);
+            movementEffects = new List<GameObject>(totalMovementEffects);
+            for (int i = 0; i < totalMovementEffects; i++)
+            {
+                movementEffects.Add(EffectManager.InitializeParticleSystems(MovementEffect));
+            }
         }
 
 

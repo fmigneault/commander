@@ -2383,16 +2383,20 @@ MonoBehaviour:
   FactionColor: {r: 0, g: 0, b: 1, a: 1}
   IsGroundUnit: 1
   IsAirUnit: 0
-  ProductionDelay: 12
-  MovingSpeed: 10
-  RotationSpeed: 45
   CanAttackGround: 1
   CanAttackAir: 0
   MinAttackRange: 15
   MaxAttackRange: 50
+  Health: 120
+  HitPoints: 25
+  MinimumDestructionDelay: 5
+  ProductionDelay: 14
+  MovingSpeed: 8
+  RotationSpeed: 60
   SelectionSprite: {fileID: 180342}
   MiniMapIconSprite: {fileID: 21203468}
   DestroyExplosionEffect: {fileID: 0}
+  MovementEffect: {fileID: 139534, guid: 36f8cfe6d16a22144b830d86d8c09d3c, type: 2}
   ProducedBuildings: []
 --- !u!114 &11449834
 MonoBehaviour:

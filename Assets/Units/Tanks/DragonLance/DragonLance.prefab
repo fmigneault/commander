@@ -667,13 +667,15 @@ MonoBehaviour:
   FactionColor: {r: 1, g: 0, b: 0, a: 1}
   IsGroundUnit: 1
   IsAirUnit: 0
-  ProductionDelay: 8
-  MovingSpeed: 15
-  RotationSpeed: 45
   CanAttackGround: 1
   CanAttackAir: 0
   MinAttackRange: 15
   MaxAttackRange: 40
+  Health: 80
+  HitPoints: 12
+  ProductionDelay: 8
+  MovingSpeed: 15
+  RotationSpeed: 45
   SelectionSprite: {fileID: 171136}
   MiniMapIconSprite: {fileID: 21234818}
   DestroyExplosionEffect: {fileID: 0}
@@ -692,7 +694,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AimingTarget: {fileID: 0}
   AttackBullet: {fileID: 118896, guid: ad03e649eb0577b41a280c9062ba8c9f, type: 2}
-  AttackBulletSpeed: 90
+  AttackBulletSpeed: 80
   AttackMinInterval: 2
   BarrelOutput: {fileID: 164992}
   CannonTurret: {fileID: 118102}

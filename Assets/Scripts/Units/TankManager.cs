@@ -80,11 +80,14 @@ namespace Units
 			Quaternion turretRelativeAngleY = Quaternion.LookRotation(targetDirection, Vector3.up);
 			if (CannonRotateSpeed == 0)
 			{
-				transform.rotation = Quaternion.RotateTowards(transform.rotation, turretRelativeAngleY, unitManager.RotationSpeed * Time.deltaTime);
+				transform.rotation = Quaternion.RotateTowards(transform.rotation, turretRelativeAngleY, 
+                                                              unitManager.RotationSpeed * Time.deltaTime);
 			}
 			else
 			{
-				CannonTurret.transform.rotation = Quaternion.RotateTowards(CannonTurret.transform.rotation, turretRelativeAngleY, CannonRotateSpeed * Time.deltaTime);
+				CannonTurret.transform.rotation = Quaternion.RotateTowards(CannonTurret.transform.rotation, 
+                                                                           turretRelativeAngleY, 
+                                                                           CannonRotateSpeed * Time.deltaTime);
 			}
 		}
 
@@ -95,12 +98,14 @@ namespace Units
 			if (BarrelLockOnTarget && AimingTarget != null)
 			{
 				// For lock on specified target, rotate the barrel to point toward it 
-				barrelRelativeAngleX = Quaternion.LookRotation(AimingTarget.transform.position - CannonTurret.transform.position, CannonBarrel.transform.up);
+                var towardTarget = AimingTarget.transform.position - CannonTurret.transform.position;
+				barrelRelativeAngleX = Quaternion.LookRotation(towardTarget, CannonBarrel.transform.up);
 			}
 			else if (!BarrelLockOnTarget && AimingTarget != null)
 			{
 				// For specific rotation angle, find remaining upward rotation of barrel and apply offsets until reached
-				float currentBarrelAngle = Vector3.Angle(CannonTurret.transform.forward, CannonBarrel.transform.forward);
+				float currentBarrelAngle = Vector3.Angle(CannonTurret.transform.forward, 
+                                                         CannonBarrel.transform.forward);
 				float rotationOffset = currentBarrelAngle - BarrelAttackAngle;
 				if (Mathf.Abs(rotationOffset) > barrelRotationDelta)
 				{ 
@@ -112,10 +117,12 @@ namespace Units
 			else
 			{
 				// Otherwise aim forward in normal position (no target)
-				barrelRelativeAngleX = Quaternion.LookRotation(CannonTurret.transform.forward, CannonBarrel.transform.up);
+				barrelRelativeAngleX = Quaternion.LookRotation(CannonTurret.transform.forward, 
+                                                               CannonBarrel.transform.up);
 			}
 			// Apply the rotation
-			CannonBarrel.transform.rotation = Quaternion.RotateTowards(CannonBarrel.transform.rotation, barrelRelativeAngleX, barrelRotationDelta);
+			CannonBarrel.transform.rotation = Quaternion.RotateTowards(CannonBarrel.transform.rotation, 
+                                                                       barrelRelativeAngleX, barrelRotationDelta);
 		}
 
 
@@ -128,9 +135,14 @@ namespace Units
 
         private void ExecuteProjectileAnimation()
         {
-            // Execute the animation only if a target and projectile were specified, and the delay between shots is over
-            if (AimingTarget != null && unitManager.InAttackRange(AimingTarget) && 
-                AttackBullet != null && currentAttackDelay <= 0)
+            UnitManager targetUnitManager = null;
+            if (AimingTarget != null) targetUnitManager = AimingTarget.GetComponent<UnitManager>();;
+
+            // Run the animation only if all the conditions are met: 
+            //    There is a target with remaining health to attack, a projectile is specified, the unit to attack is
+            //    within attack range, the current unit is not destroyed and the delay between shots fired has elapsed
+            if (targetUnitManager != null && targetUnitManager.Health > 0 && AttackBullet != null && 
+                unitManager.InAttackRange(AimingTarget) && unitManager.Health > 0 && currentAttackDelay <= 0)
             {
                 // Get the angle between the barrel output and the target
                 var barrelTowardTarget = AimingTarget.transform.position - CannonBarrel.transform.position;
@@ -148,7 +160,7 @@ namespace Units
                 #endregion
                 #endif
 
-                // Shoot the projectile only if aiming toward the target, and at the right upward angle when applicable
+                // Shoot the projectile only if aiming toward the target and at the right upward angle as applicable
                 // Apply required trajectory (arc or linear) according to barrel operation mode
                 if (angleAwayFromTarget <= unitManager.PermissiveDestinationAngleDelta)
                 {                       
@@ -176,16 +188,22 @@ namespace Units
             AttackBullet.transform.rotation = BarrelOutput.transform.rotation;
             DisplayProjectileEffect(AttackBullet, ProjectileShootEffect);
 
-            // Execute the trajectory animation
+            // Execute the trajectory animation up to the target location
             yield return trajectory();
 
-            // Hide the projectile when the target was reached, display the impact effect on the target
+            // Hide the projectile when the target was reached and display the impact effect at it's location
             //    Use the current's unit impact effects even if it is the target that gets hit to ensure that each 
             //    projectile gets the corresponding impact on hit, in case that multiple units attack the same target.
             //    Using the target's effect could interfere with another impact already occuring and using it, but 
             //    only a single impact can happen at a time for the attacking unit since we limit attacks over a delay.
             ProjectileVisibility = false;
             DisplayProjectileEffect(AttackBullet, ProjectileImpactEffect);
+
+            // Reduce the target's health by the amount of hit points
+            //    In case that multiple units are attacking the same target and that another unit's projectile destroyed 
+            //    the target before this unit's projectile reached it, the reference to the target could already have
+            //    been unset because the target is not in 'destroyed' state. We need to check the reference beforehand.
+            if (AimingTarget != null) AimingTarget.GetComponent<UnitManager>().Health -= unitManager.HitPoints;
         }
 
 
@@ -262,6 +280,13 @@ namespace Units
                 ProjectileImpactEffect = EffectManager.InitializeParticleSystems(ProjectileImpactEffect);
                 ProjectileShootEffect = EffectManager.InitializeParticleSystems(ProjectileShootEffect);
             }
+        }
+
+
+        public void DestroyInstanciatedReferences()
+        {
+            if (ProjectileImpactEffect != null) Destroy(ProjectileImpactEffect);
+            if (ProjectileShootEffect != null) Destroy(ProjectileShootEffect);
         }
 	}
 }

@@ -103,6 +103,14 @@ namespace Cameras
                 }
             }
 
+            // Unselect any previously selected unit that got destroyed
+            //    Use reverse order for loop because we cannot remove object in list while iterating over it with a 
+            //    foreach loop and removing objects in the ascending order moves later indexes down by one each time.
+            for (int i = selectedUnits.Count - 1; i >= 0; i--)
+            {
+                if (selectedUnits[i].GetComponent<UnitManager>().Health < 0) UnselectSingleUnit(selectedUnits[i]);
+            }
+
             // Update control values
             previousMouseRotation = cameraRTS.IsRotatingWithMouse;  // Update for next frame
 			buttonClickedFlag = false;	// Reset
@@ -452,7 +460,7 @@ namespace Cameras
 
         private void SelectUnit(GameObject unit)
         {
-            if (unit != null && !selectedUnits.Contains(unit))
+            if (unit != null && !selectedUnits.Contains(unit) && unit.GetComponent<UnitManager>().Health > 0)
             {
                 SetUnitHighlightState(unit, true);
                 selectedUnits.Add(unit);

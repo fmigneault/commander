@@ -16666,13 +16666,15 @@ MonoBehaviour:
   FactionColor: {r: 1, g: 0, b: 0, a: 1}
   IsGroundUnit: 1
   IsAirUnit: 0
-  ProductionDelay: 10
-  MovingSpeed: 20
-  RotationSpeed: 30
   CanAttackGround: 0
   CanAttackAir: 0
   MinAttackRange: 0
   MaxAttackRange: 0
+  Health: 50
+  HitPoints: 0
+  ProductionDelay: 10
+  MovingSpeed: 20
+  RotationSpeed: 30
   SelectionSprite: {fileID: 195588}
   MiniMapIconSprite: {fileID: 21252974}
   DestroyExplosionEffect: {fileID: 0}

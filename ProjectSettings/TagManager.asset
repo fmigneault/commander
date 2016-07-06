@@ -15,6 +15,9 @@ TagManager:
   - Building
   - Button
   - MiniMap
+  - MiniMapCamera
+  - Fire
+  - Effect
   layers:
   - Default
   - TransparentFX

@@ -103,6 +103,14 @@ namespace Cameras
                 }
             }
 
+            // Unselect any previously selected unit that got destroyed
+            //    Use reverse order for loop because we cannot remove object in list while iterating over it with a 
+            //    foreach loop and removing objects in the ascending order moves later indexes down by one each time.
+            for (int i = selectedUnits.Count - 1; i >= 0; i--)
+            {
+                if (selectedUnits[i].GetComponent<UnitManager>().Health < 0) UnselectSingleUnit(selectedUnits[i]);
+            }
+
             // Update control values
             previousMouseRotation = cameraRTS.IsRotatingWithMouse;  // Update for next frame
 			buttonClickedFlag = false;	// Reset
@@ -454,8 +462,13 @@ namespace Cameras
         {
             if (unit != null && !selectedUnits.Contains(unit))
             {
-                SetUnitHighlightState(unit, true);
-                selectedUnits.Add(unit);
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.Health > 0)
+                {
+                    SetUnitHighlightState(unit, true);
+                    selectedUnits.Add(unit);
+                    if (unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = true;
+                }
             }
         }
 
@@ -465,6 +478,8 @@ namespace Cameras
 			foreach (var unit in selectedUnits)
 			{
 				SetUnitHighlightState(unit, false);
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = false;
 			}
 			selectedUnits.Clear();
 			ChangeIconPanelVisibility(IconPanel, false);
@@ -472,9 +487,15 @@ namespace Cameras
 
 
 		private void UnselectSingleUnit(GameObject unit) 
-		{			
-			selectedUnits.Remove(unit);
-			SetUnitHighlightState(unit, false);
+		{		
+            if (unit != null)
+            {
+                selectedUnits.Remove(unit);
+                SetUnitHighlightState(unit, false);
+
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = false;
+            }
 		}
 
 

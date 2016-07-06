@@ -49,6 +49,7 @@
      <Compile Include="Assets\Editor\LayoutHelpers.cs" />
      <Compile Include="Assets\Editor\RTS_CameraEditor.cs" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
+     <None Include="Assets\Units\Health\Shaders\AlphaProgress.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
      <None Include="Assets\Imported\ParticleSystems\Shaders\PriorityParticleAlpha.shader" />
      <None Include="Assets\Imported\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />

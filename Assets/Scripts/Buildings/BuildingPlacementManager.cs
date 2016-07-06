@@ -193,8 +193,11 @@ namespace Buildings
                 
             // Apply new multiplier to all parts and update current multiplier
             foreach (var part in buildingParts)
-            {                   
-                part.material.color *= invertMultiplier * colorMultiplier;
+            {    
+                if (part.material != null && part.material.HasProperty("_Color"))
+                {
+                    part.material.color *= invertMultiplier * colorMultiplier;
+                }
             }
             currentPlacementMultiplier = colorMultiplier;
         }

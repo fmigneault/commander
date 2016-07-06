@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-#define OUTPUT_DEBUG
+//#define OUTPUT_DEBUG
 
 using UnityEngine;
 using System.Collections;
@@ -14,20 +14,33 @@ namespace Units
 		public string Code = "";
 		public Color FactionColor = Color.white;
 		public bool IsGroundUnit = false;
-		public bool IsAirUnit = false;
-
-		// Unit production parameters
-		public float ProductionDelay = 0; 
-
-		// Movement parameters
-		public float MovingSpeed = 0;
-		public float RotationSpeed = 0;
+		public bool IsAirUnit = false;      
 
 		// Attack parameters
 		public bool CanAttackGround = false;
 		public bool CanAttackAir = false;
 		public float MinAttackRange = 0;
 		public float MaxAttackRange = 0;
+
+        // Health and hit points
+        public int Health = 100;                    // Current health of the unit
+        public int HitPoints = 10;                  // Dammage inflicted by attacks
+        private int maxHealth;                      // Equal to current health at initialization (memory)
+
+        // Unit production parameters
+        public float ProductionDelay = 0; 
+
+        // Movement parameters
+        public float MovingSpeed = 0;
+        public float RotationSpeed = 0;
+
+        // Delays for unit destuction 
+        public float DestructionMinimumDelay = 5;   // Minimum (in case the destruction effect is not specified)
+        public float AfterDestructionDelay = 4;     // Delay to wait after the effects stop emitting
+
+        // Speed at which the unit will translate by the offset value through the ground until disappearing
+        public float DestructionTranlateSpeed = 0.01f;
+        public float DestructionTranlateOffset = 4;
 
 		// Selected unit highlight on ground reference
 		public GameObject SelectionSprite = null;
@@ -50,13 +63,16 @@ namespace Units
         private GameObject attackTarget = null;
 
         // To allow displaying effects on multiple subsequent movemnets, we require more than one effect instance
-        //    Using only one instance sometimes makes it disapear suddenly, because following movement require the 
+        //    Using only one instance sometimes makes it  suddenly, because following movement require the 
         //    effect faster than it can complete it's previous call. Therefore, we use a list of available effects
         //    that we gradually cycle through upon each new movement.
-        private int totalMovementEffects = 5;       // Quantity of ParticleSystem effects to instanciate
-        private int activeMovementEffect = 0;       // Control variable to cycle through the effects as neede
-        private bool previousMovement = false;      // Control variable to switch to the next effect
-        private List<GameObject> movementEffects;   // List of instanciated ParticleSystems
+        private const int totalMovementEffects = 5;         // Quantity of ParticleSystem effects to instanciate
+        private int activeMovementEffect = 0;               // Control variable to cycle through the effects as neede
+        private bool previousMovement = false;              // Control variable to switch to the next effect
+        private List<GameObject> movementEffects = null;    // List of instanciated ParticleSystems
+
+        // Value that multiplies the color of every part of the unit when it gets destroyed
+        private Color destroyColorMultiplier = new Color(0.9f, 0.9f, 0.9f);       
 
 
 		void Awake()
@@ -65,6 +81,8 @@ namespace Units
 			InitializeSelectionHighlight();
             InitializeMiniMapIcon();
             InitializeParticleEffects();
+            HealthBar = GetComponentInChildren<HealthBarManager>();
+            maxHealth = Health;
 
             // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
             PermissiveDestinationAngleDelta = 1;
@@ -81,10 +99,19 @@ namespace Units
 
 
         void Update()
-        {
-            UpdateAttackUnit();
-            if (!UpdateRotateUnit()) return;
-            UpdateMoveUnit();
+        {      
+            // Update health, then apply actions accordingly to specified commands and current statuses
+            if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
+            if (Health > 0)
+            {                
+                UpdateAttackUnit();
+                if (!UpdateRotateUnit()) return;
+                UpdateMoveUnit();
+            }
+            else
+            {
+                StartCoroutine(DestroyUnit());
+            }
         }
 
 
@@ -108,7 +135,7 @@ namespace Units
         {        
             // Do nothing if requested unit to attack is itself    
             if (target != gameObject) attackTarget = target;
-        }   
+        }
 
 
         private void UpdateMoveUnit()
@@ -121,14 +148,22 @@ namespace Units
                 transform.position = newPosition;   // Adjust the intermediate new position toward the destination
 
                 // Move, rotate and display the movement effects at the current unit location
-                movementEffects[activeMovementEffect].transform.position = newPosition; 
-                movementEffects[activeMovementEffect].transform.rotation = transform.rotation;
-                StartCoroutine(EffectManager.LoopParticleSystems(movementEffects[activeMovementEffect]));
+                if (movementEffects != null)
+                {
+                    var activeEffect = movementEffects[activeMovementEffect];
+                    activeEffect.transform.position = newPosition; 
+                    activeEffect.transform.rotation = transform.rotation;
+                    StartCoroutine(EffectManager.LoopParticleSystems(activeEffect));
+                }
             }
             else
             {
-                // Stop emitting new particles for reached destination, the ones already emitted will gradually disapear
-                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(movementEffects[activeMovementEffect]));
+                // Stop emitting new particles for reached destination, already emitted ones will gradually disappear
+                if (movementEffects != null)
+                {
+                    var activeEffect = movementEffects[activeMovementEffect];
+                    StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(activeEffect));
+                }
             }
         }
 
@@ -142,7 +177,11 @@ namespace Units
             {   
                 // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
                 // the particles suddenly rotate when the next emission is requested as the forward movement resumes
-                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(movementEffects[activeMovementEffect]));
+                if (movementEffects != null)
+                {
+                    var activeEffect = movementEffects[activeMovementEffect];
+                    StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(activeEffect));
+                }
 
                 // Update the control variables for following frames that could require particle emission with movement
                 if (previousMovement) activeMovementEffect = ++activeMovementEffect % totalMovementEffects;
@@ -150,7 +189,8 @@ namespace Units
 
                 // Apply the intermediate rotation toward the target destination
                 var rotationDestination = Quaternion.LookRotation(towardDestination, transform.up);
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination, RotationSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationDestination,  
+                                                              RotationSpeed * Time.deltaTime);
                 return false;
             }
             return true;    // Finished rotation (already pointing toward target)
@@ -162,37 +202,45 @@ namespace Units
             if (attackTarget != null)
             {
                 UnitManager targetUnitManager = attackTarget.GetComponent<UnitManager>();
-                if (targetUnitManager != null && RespectsAttackTypes(targetUnitManager))
+                if (targetUnitManager != null)
                 {
-                    #if OUTPUT_DEBUG
-                    #region DEBUG
-                    if (tag == "TemperedHammer") Debug.Log(string.Format("Respect Type + Target ({0})", attackTarget == null));
-                    #endregion
-                    #endif
-
-                    // If not in range, move to minimum/maximum required attack range first
-                    if (!InAttackRange(attackTarget))
+                    if (targetUnitManager.Health < 0)
+                    {
+                        attackTarget = null;
+                    }
+                    else if (RespectsAttackTypes(targetUnitManager))
                     {
                         #if OUTPUT_DEBUG
                         #region DEBUG
-                        if (tag == "TemperedHammer") Debug.Log(string.Format("Out of Range - Moving first ({0})", attackTarget == null));
+                        Debug.Log(string.Format("Respect Type + Target ({0})", attackTarget == null));
                         #endregion
                         #endif
 
-                        destinationRequest = GetRequiredPositionInRange(attackTarget);
-                    }
-                    // Otherwise, cancel movement
-                    // This allows attacking right away an in-range unit
-                    else
-                    {
-                        #if OUTPUT_DEBUG
-                        #region DEBUG
-                        if (tag == "TemperedHammer") Debug.Log(string.Format("In Range - Stop moving ({0})", attackTarget == null));
-                        #endregion
-                        #endif
+                        // If not in range, move to minimum/maximum required attack range first
+                        if (!InAttackRange(attackTarget))
+                        {
+                            #if OUTPUT_DEBUG
+                            #region DEBUG
+                            Debug.Log(string.Format("Out of Range - Moving first ({0})", attackTarget == null));
+                            #endregion
+                            #endif
 
-                        destinationRequest = transform.position;
+                            destinationRequest = GetRequiredPositionInRange(attackTarget);
+                        }
+                        // Otherwise, cancel movement
+                        // This allows attacking right away an in-range unit
+                        else
+                        {
+                            #if OUTPUT_DEBUG
+                            #region DEBUG
+                            Debug.Log(string.Format("In Range - Stop moving ({0})", attackTarget == null));
+                            #endregion
+                            #endif
+
+                            destinationRequest = transform.position;
+                        }
                     }
+                    else attackTarget = null;   // Reject any set target if it doesn't match any condition
                 }
             }
 
@@ -209,7 +257,8 @@ namespace Units
 
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
 		{
-			return ((targetUnitManager.IsAirUnit && CanAttackAir) || (targetUnitManager.IsGroundUnit && CanAttackGround));
+			return ((targetUnitManager.IsAirUnit && CanAttackAir) || 
+                    (targetUnitManager.IsGroundUnit && CanAttackGround));
 		}
 
 
@@ -224,19 +273,62 @@ namespace Units
         private Vector3 GetRequiredPositionInRange(GameObject target)
         {            
             float distance = Vector3.Distance(transform.position, target.transform.position);
-            if (distance < MinAttackRange) return (transform.position - target.transform.position) * MinAttackRange / distance;
+            if (distance < MinAttackRange)
+            {
+                return (transform.position - target.transform.position) * MinAttackRange / distance;
+            }
             return Vector3.Lerp(target.transform.position, transform.position, MaxAttackRange / distance);
         }
 
 
-		// Function that delegates "Attack" calls/requirements to sub-classes of the GameObject linked to this "UnitManager" class
+		// Function that delegates "Attack" calls to sub-classes of the GameObject linked to this "UnitManager" class
 		private void AttackDelegate(GameObject target)
 		{
-			if (gameObject.tag == "Tank")
-			{
-				GetComponent<TankManager>().AimingTarget = target;
-			}
+			if (gameObject.tag == "Tank") GetComponent<TankManager>().AimingTarget = target;
 		}
+
+
+        public IEnumerator DestroyUnit()
+        {            
+            // Stop the unit onto it's current location (cannot move anymore) and stop attacking any previous target
+            destinationRequest = transform.position;
+            attackTarget = null;
+
+            // Find all sub-parts of the unit to have their color values adjusted
+            var unitParts = gameObject.GetComponentsInChildren<MeshRenderer>();
+            foreach (var part in unitParts)
+            {
+                foreach (var mat in part.materials)
+                {
+                    if (mat.HasProperty("_Color")) mat.color *= destroyColorMultiplier;
+                }
+            }
+
+            // Display the destruction effect and wait for it to complete before destroying the unit (or minimum delay)
+            if (DestroyExplosionEffect != null)
+            {     
+                var delay = Mathf.Max(DestructionMinimumDelay, EffectManager.GetMaximumDuration(DestroyExplosionEffect));
+                DestroyExplosionEffect.transform.position = transform.position;
+                StartCoroutine(EffectManager.LoopParticleSystems(DestroyExplosionEffect));
+                yield return new WaitForSeconds(delay);
+                StartCoroutine(EffectManager.StopParticleSystemsCompleteAnimation(DestroyExplosionEffect));
+            }
+            yield return new WaitForSeconds(AfterDestructionDelay);
+
+            // Translate the unit through the terrain to make it disappear
+            var destroyTranslatePosition = transform.position;
+            destroyTranslatePosition.y -= DestructionTranlateOffset;
+            while (transform.position != destroyTranslatePosition)
+            {                
+                transform.position = Vector3.MoveTowards(transform.position, destroyTranslatePosition, 
+                                                         DestructionTranlateSpeed * Time.fixedDeltaTime);
+                yield return new WaitForFixedUpdate();
+            }
+
+            // Destroy all instanciated references, then destoy the actual unit
+            DestroyInstanciatedReferences();
+            Destroy(gameObject);
+        }
 
 
         public bool SelectionHighlightState
@@ -268,25 +360,34 @@ namespace Units
         }
 
 
+        // Reference to an attached HealthBar object (searched automatically at initialization)
+        public HealthBarManager HealthBar
+        {
+            get;
+            private set;
+        }
+
+
         private void InitializeParticleEffects()
         {
             // Initialize particle effects to be used with 'EffectManager', or set to null if not possible
             DestroyExplosionEffect = EffectManager.InitializeParticleSystems(DestroyExplosionEffect);
-            movementEffects = new List<GameObject>(totalMovementEffects);
-            for (int i = 0; i < totalMovementEffects; i++)
+            if (MovementEffect != null)
             {
-                movementEffects.Add(EffectManager.InitializeParticleSystems(MovementEffect));
+                movementEffects = new List<GameObject>(totalMovementEffects);
+                for (int i = 0; i < totalMovementEffects; i++)
+                {
+                    movementEffects.Add(EffectManager.InitializeParticleSystems(MovementEffect));
+                }
             }
         }
 
 
-        public void DisplayUnitDestruction()
+        private void DestroyInstanciatedReferences()
         {
-            if (DestroyExplosionEffect != null)
-            {
-                DestroyExplosionEffect.transform.position = transform.position;
-                StartCoroutine(EffectManager.PlayParticleSystems(DestroyExplosionEffect));
-            }
+            foreach (var effect in movementEffects) if (effect != null) Destroy(effect);
+            if (DestroyExplosionEffect != null) Destroy(DestroyExplosionEffect);
+            if (tag == "Tank") GetComponent<TankManager>().DestroyInstanciatedReferences();
         }
 	}
 }

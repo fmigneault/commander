@@ -103,9 +103,11 @@
      <Compile Include="Assets\Scripts\UI\DisplayDebugText.cs" />
      <Compile Include="Assets\Scripts\UI\IconManager.cs" />
      <Compile Include="Assets\Scripts\Units\EffectManager.cs" />
+     <Compile Include="Assets\Scripts\Units\HealthBarManager.cs" />
      <Compile Include="Assets\Scripts\Units\TankManager.cs" />
      <Compile Include="Assets\Scripts\Units\UnitManager.cs" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
+     <None Include="Assets\Units\Health\Shaders\AlphaProgress.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
      <None Include="Assets\Imported\ParticleSystems\Shaders\PriorityParticleAlpha.shader" />
      <None Include="Assets\Imported\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />

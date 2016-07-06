@@ -23,8 +23,9 @@ namespace Units
 		public float MaxAttackRange = 0;
 
         // Health and hit points
-        public int Health = 100;
-        public int HitPoints = 10;
+        public int Health = 100;                    // Current health of the unit
+        public int HitPoints = 10;                  // Dammage inflicted by attacks
+        private int maxHealth;                      // Equal to current health at initialization (memory)
 
         // Unit production parameters
         public float ProductionDelay = 0; 
@@ -71,7 +72,7 @@ namespace Units
         private List<GameObject> movementEffects = null;    // List of instanciated ParticleSystems
 
         // Value that multiplies the color of every part of the unit when it gets destroyed
-        private Color destroyColorMultiplier = new Color(0.9f, 0.9f, 0.9f);
+        private Color destroyColorMultiplier = new Color(0.9f, 0.9f, 0.9f);       
 
 
 		void Awake()
@@ -80,6 +81,8 @@ namespace Units
 			InitializeSelectionHighlight();
             InitializeMiniMapIcon();
             InitializeParticleEffects();
+            HealthBar = GetComponentInChildren<HealthBarManager>();
+            maxHealth = Health;
 
             // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
             PermissiveDestinationAngleDelta = 1;
@@ -96,9 +99,11 @@ namespace Units
 
 
         void Update()
-        {            
+        {      
+            // Update health, then apply actions accordingly to specified commands and current statuses
+            if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
             if (Health > 0)
-            {
+            {                
                 UpdateAttackUnit();
                 if (!UpdateRotateUnit()) return;
                 UpdateMoveUnit();
@@ -130,7 +135,7 @@ namespace Units
         {        
             // Do nothing if requested unit to attack is itself    
             if (target != gameObject) attackTarget = target;
-        }   
+        }
 
 
         private void UpdateMoveUnit()
@@ -291,7 +296,13 @@ namespace Units
 
             // Find all sub-parts of the unit to have their color values adjusted
             var unitParts = gameObject.GetComponentsInChildren<MeshRenderer>();
-            foreach (var part in unitParts) foreach (var mat in part.materials) mat.color *= destroyColorMultiplier;
+            foreach (var part in unitParts)
+            {
+                foreach (var mat in part.materials)
+                {
+                    if (mat.HasProperty("_Color")) mat.color *= destroyColorMultiplier;
+                }
+            }
 
             // Display the destruction effect and wait for it to complete before destroying the unit (or minimum delay)
             if (DestroyExplosionEffect != null)
@@ -343,6 +354,14 @@ namespace Units
 
 
         public float PermissiveDestinationAngleDelta
+        {
+            get;
+            private set;
+        }
+
+
+        // Reference to an attached HealthBar object (searched automatically at initialization)
+        public HealthBarManager HealthBar
         {
             get;
             private set;

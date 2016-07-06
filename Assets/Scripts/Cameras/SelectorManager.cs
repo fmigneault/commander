@@ -460,10 +460,15 @@ namespace Cameras
 
         private void SelectUnit(GameObject unit)
         {
-            if (unit != null && !selectedUnits.Contains(unit) && unit.GetComponent<UnitManager>().Health > 0)
+            if (unit != null && !selectedUnits.Contains(unit))
             {
-                SetUnitHighlightState(unit, true);
-                selectedUnits.Add(unit);
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.Health > 0)
+                {
+                    SetUnitHighlightState(unit, true);
+                    selectedUnits.Add(unit);
+                    if (unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = true;
+                }
             }
         }
 
@@ -473,6 +478,8 @@ namespace Cameras
 			foreach (var unit in selectedUnits)
 			{
 				SetUnitHighlightState(unit, false);
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = false;
 			}
 			selectedUnits.Clear();
 			ChangeIconPanelVisibility(IconPanel, false);
@@ -480,9 +487,15 @@ namespace Cameras
 
 
 		private void UnselectSingleUnit(GameObject unit) 
-		{			
-			selectedUnits.Remove(unit);
-			SetUnitHighlightState(unit, false);
+		{		
+            if (unit != null)
+            {
+                selectedUnits.Remove(unit);
+                SetUnitHighlightState(unit, false);
+
+                var unitManager = unit.GetComponent<UnitManager>();
+                if (unitManager != null && unitManager.HealthBar != null) unitManager.HealthBar.ForceVisible = false;
+            }
 		}
 
 

@@ -39,7 +39,7 @@ namespace Cameras
 		private float maxDistance;
 		List<GameObject> selectedUnits;         // Currently selected units, accumulation possible if multiple key used
 		GameObject selectedBuilding;            // Currently selected building, only one allowed at a time		
-        private Vector3 previousMousePositon;   // Temporary position memorize on key down (for region selection)
+        private Vector3 startDragMousePositon;  // Temporary position memorize on key down (for region selection)
         private bool buttonClickedFlag;         // Flag enabled when a OnClick event has called 'ClickButtonPanel'
         private bool previousMouseRotation;     // Flag indicating if mouse rotation was occuring on the previous frame
 
@@ -74,15 +74,15 @@ namespace Cameras
             //   Get the units within the selection region when the mouse key is released
             if (Input.GetKeyDown(UnitSelectionKey))
             {                
-                previousMousePositon = mousePosition;
+                startDragMousePositon = mousePosition;
             }
-            else if (Input.GetKey(UnitSelectionKey) && mousePosition != previousMousePositon)
+            else if (Input.GetKey(UnitSelectionKey) && mousePosition != startDragMousePositon)
             {
                 DrawSelectionRegion();
             }
             else if (SelectionBox.activeSelf && Input.GetKeyUp(UnitSelectionKey))
             {
-                SelectUnitsFromRegion(previousMousePositon, mousePosition); 
+                SelectUnitsFromRegion(startDragMousePositon, mousePosition); 
             }
             // If no region selection was in progress, the following commands can be executed
             // This way, we avoid unselection of units with following commands that use the same mouse click
@@ -96,7 +96,7 @@ namespace Cameras
                 // Since the same mouse click for unit movement/attack, building placement rotation and camera rotation 
                 // can cause interferances, we validate the statuses camera and building rotation to allow unit commands
                 // Since the mouse 'up' event marks the end of the camera rotation, we have to check the previous frame
-                // to allow commands, otherwise the end of the camera rotation triggers selected unit move/attack command
+                // to allow commands, otherwise the end of the camera rotation triggers selected units to move/attack
                 else if (!AnyInPlacementFlag && !previousMouseRotation && Input.GetKeyUp(UnitAttackMoveKey))
                 {
                     MoveAndOrAttackUnit(mousePosition);
@@ -172,18 +172,32 @@ namespace Cameras
         }
 
 
+        // Returns true if any object was hit, adjusts the hitObject and the terrain position accordingly
+        // If no object was hit, adjust the terrain position accordingly but return false and no hit object
         private bool GetPointedObject(Vector3 mousePosition, out GameObject hitObject, out Vector3 terrainPosition)
 		{
 			// Draw ray from camera toward pointed position
-            // If successful, get collided object and corresponding terrain position
 			Ray ray = cam.ScreenPointToRay(mousePosition);
 			RaycastHit hit;
-            bool succes = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);           
+            bool success = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);           
 
-            terrainPosition = ray.GetPoint(hit.distance);
-            terrainPosition.y = 0;
-            hitObject = hit.collider != null ? hit.collider.gameObject : null;
-            return succes;
+            // If successful, get collided object and corresponding terrain position
+            if (success)
+            {
+                terrainPosition = ray.GetPoint(hit.distance);
+                terrainPosition.y = 0;
+                hitObject = hit.collider != null ? hit.collider.gameObject : null;
+            }
+            // If unsuccessful, assume out of terrain bounds and project the pointed position on the terrain plane
+            else
+            {
+                var terrainPlane = new Plane(GroundTerrain.transform.up, GroundTerrain.transform.position);
+                float distance;
+                terrainPosition = terrainPlane.Raycast(ray, out distance) ? ray.GetPoint(distance) : Vector3.zero;
+                hitObject = null;
+            }
+
+            return success;
 		}
             
 
@@ -330,12 +344,12 @@ namespace Cameras
             // Get the starting box position and the current mouse position to get the box dimensions
             var currentMousePosition = Input.mousePosition;
             var region = SelectionBox.GetComponent<RectTransform>();
-            var startPosition = new Vector2(previousMousePositon.x, previousMousePositon.y);
+            var startPosition = new Vector2(startDragMousePositon.x, startDragMousePositon.y);
 
             // Calculate the box dimensions, adjust the values according to signs to display properly
             //    Scaling according to screen width/height is required since the canvas scaler changes dynamically
             //    Since the position and size are always positive, we need to offset the box for reverse positions
-            var differenceArea = currentMousePosition - previousMousePositon;
+            var differenceArea = currentMousePosition - startDragMousePositon;
             if (differenceArea.x < 0)
             {
                 differenceArea.x = -differenceArea.x;
@@ -365,8 +379,8 @@ namespace Cameras
             //    Corner clockwise order: (Start -> Corner1 -> End -> Corner2)
             var mousePositionCorner1 = new Vector3(mousePositionStart.x, mousePositionEnd.y, 0);
             var mousePositionCorner2 = new Vector3(mousePositionEnd.x, mousePositionStart.y, 0);
-            var upScreen = new Vector3(0, 0, 1);
-            if (PositionRelativeToVector(mousePositionCorner1, mousePositionStart, mousePositionEnd, upScreen) < 1)
+            var towarScreen = Vector3.forward;
+            if (PositionRelativeToVector(mousePositionCorner1, mousePositionStart, mousePositionEnd, towarScreen) < 1)
             {
                 // Inverse extra corners if not positionned properly, so that we get the clockwise order required
                 var tmp = mousePositionCorner1;

@@ -399,7 +399,7 @@ namespace Units
         public void OnPathFound(Vector3[] newPath, bool pathSuccess)
         {
             if (pathSuccess)
-            {
+            {                
                 destinationWaypointPath = newPath;  // Update the found path waypoints
                 destinationWaypointIndex = 0;       // Start at the first waypoint position as a destination
                 StopCoroutine("FollowPath");        // Stop updating the waypoints of a previous path request
@@ -408,19 +408,10 @@ namespace Units
         }
 
 
-        // Moves to the next waypoint in the path when the current one is reached by the unit
+        // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
         IEnumerator FollowPath() 
         {     
-            Vector3 currentWaypoint = Vector3.zero;
-            try
-            {
-             currentWaypoint = destinationWaypointPath[0];
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Debug.Log(string.Format("Lenght: {0}", destinationWaypointPath.Length));
-            }
-
+            var currentWaypoint = destinationWaypointPath[0];
             while (true) 
             {
                 if (transform.position == currentWaypoint) 
@@ -439,10 +430,12 @@ namespace Units
         }
 
 
+        // Draws the waypoints with connected lines to form the returned path to avoid obstables
         public void OnDrawGizmos()
         {
-            if (destinationWaypointPath != null) {
-                for (int i = destinationWaypointIndex; i < destinationWaypointPath.Length; i ++) 
+            if (destinationWaypointPath != null) 
+            {
+                for (int i = destinationWaypointIndex; i < destinationWaypointPath.Length; i++) 
                 {
                     Gizmos.color = Color.black;
                     Gizmos.DrawCube(destinationWaypointPath[i], Vector3.one);

@@ -5,21 +5,12 @@ namespace AI
 {
     public class Node : IHeapItem<Node> 
     {
-    	public bool walkable;
-    	public Vector3 worldPosition;
-    	public int gridX;
-    	public int gridY;
-
-    	public Node parent;
-    	int heapIndex;
-    	
-
-    	public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY) 
+    	public Node(bool walkable, Vector3 worldPosition, int gridX, int gridY) 
         {
-    		walkable = _walkable;
-    		worldPosition = _worldPos;
-    		gridX = _gridX;
-    		gridY = _gridY;
+    		Walkable = walkable;
+    		WorldPosition = worldPosition;
+    		GridX = gridX;
+    		GridY = gridY;
     	}
 
 
@@ -27,12 +18,12 @@ namespace AI
         public int hCost { get; set; }                      // Distance from end node (heuristic)
         public int fCost { get { return gCost + hCost; } }  // Total cost (minimization)
 
-
-    	public int HeapIndex 
-        {
-    		get { return heapIndex; }
-    		set { heapIndex = value; }
-    	}
+        public bool Walkable { get; set; }
+        public Vector3 WorldPosition { get; set; }
+        public int GridX { get; set; }
+        public int GridY { get; set; }
+        public int HeapIndex { get; set; }
+        public Node Parent { get; set; }
 
 
     	public int CompareTo(Node nodeToCompare) 

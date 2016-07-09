@@ -42,12 +42,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855e868289c1843b09c78e143b2b1288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  displayGridGizmos: 1
-  unwalkableMask:
+  DisplayGridGizmos: 0
+  UnwalkableMask:
     serializedVersion: 2
     m_Bits: 9216
   GroundTerrain: {fileID: 0}
-  nodeRadius: 1
+  NodeRadius: 1
 --- !u!114 &11452876
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -59,6 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceccdd2eca5974089b87e95c761e83d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Algorithm: 2
 --- !u!114 &11492514
 MonoBehaviour:
   m_ObjectHideFlags: 1

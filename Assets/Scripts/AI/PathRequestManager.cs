@@ -5,7 +5,8 @@ using System;
 
 namespace AI
 {
-    // Spreads out the path requests over multiple frames to avoid locking / freezing the game upon multiple requests
+    // Spreads out the pathfinding calculations over multiple frames to avoid locking / freezing 
+    // the game upon multiple requests coming from any number of units
     public class PathRequestManager : MonoBehaviour 
     {
     	Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
@@ -39,15 +40,16 @@ namespace AI
     	}
 
 
-        // Function to request a new pathfinding request by outside code
+        // Function to request a new pathfinding request from outside code
     	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
         {
-    		PathRequest newRequest = new PathRequest(pathStart, pathEnd, callback);
+    		var newRequest = new PathRequest(pathStart, pathEnd, callback);
     		instance.pathRequestQueue.Enqueue(newRequest);
     		instance.TryProcessNext();
     	}
 
 
+        // Tries to process the next available request in the queue
     	void TryProcessNext() 
         {
     		if (!isProcessingPath && pathRequestQueue.Count > 0)

@@ -832,8 +832,8 @@ MonoBehaviour:
   Health: 80
   HitPoints: 12
   ProductionDelay: 8
-  MovingSpeed: 15
-  RotationSpeed: 45
+  MovingSpeed: 12
+  RotationSpeed: 90
   DestructionMinimumDelay: 5
   AfterDestructionDelay: 4
   DestructionTranlateSpeed: 0.01
@@ -859,6 +859,7 @@ MonoBehaviour:
   Unit: {fileID: 111712}
   OffsetAboveUnit: 5
   SizeOnScreen: 3
+  ForceVisible: 0
 --- !u!114 &11478242
 MonoBehaviour:
   m_ObjectHideFlags: 1

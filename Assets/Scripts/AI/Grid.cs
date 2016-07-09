@@ -6,21 +6,21 @@ namespace AI
 {
     public class Grid : MonoBehaviour 
     {
-    	public bool displayGridGizmos;
-    	public LayerMask unwalkableMask;
-    	public Terrain GroundTerrain;
-    	public float nodeRadius;
-    	Node[,] grid;
-
+        // Parameter settings
+    	public bool DisplayGridGizmos;
+    	public LayerMask UnwalkableMask;    
+    	public Terrain GroundTerrain;       // Reference to the terrain to generate nodes over its full area
+    	public float NodeRadius;            // World positions precision according to Nodes size
+    	
+        private Node[,] grid;
         private Vector2 gridWorldSize;
 
     	float nodeDiameter;
     	int gridSizeX, gridSizeY;
 
-
     	void Awake() 
         {
-    		nodeDiameter = nodeRadius*2;
+    		nodeDiameter = NodeRadius*2;
             gridWorldSize = new Vector2(GroundTerrain.terrainData.size.x, GroundTerrain.terrainData.size.z);
     		gridSizeX = Mathf.RoundToInt(gridWorldSize.x/nodeDiameter);
     		gridSizeY = Mathf.RoundToInt(gridWorldSize.y/nodeDiameter);
@@ -33,26 +33,37 @@ namespace AI
     	}
 
 
+        public Node this[int x, int y] 
+        { 
+            get { return grid[x,y]; }
+            set { grid[x,y] = value; }
+        }
+
+
     	void CreateGrid() 
         {
+            
     		grid = new Node[gridSizeX,gridSizeY];
-    		Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x/2 - Vector3.forward * gridWorldSize.y/2;
+            Vector3 worldBottomLeft = GroundTerrain.transform.position + 
+                                      Vector3.left * gridWorldSize.x / 2 + 
+                                      Vector3.back * gridWorldSize.y / 2;
 
-    		for (int x = 0; x < gridSizeX; x ++) 
+    		for (int x = 0; x < gridSizeX; x++) 
             {
-    			for (int y = 0; y < gridSizeY; y ++) 
+    			for (int y = 0; y < gridSizeY; y++) 
                 {
-    				Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-    				bool walkable = !(Physics.CheckSphere(worldPoint,nodeRadius,unwalkableMask));
-    				grid[x,y] = new Node(walkable,worldPoint, x,y);
+    				Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + NodeRadius) +
+                                         Vector3.forward * (y * nodeDiameter + NodeRadius);
+    				bool walkable = !(Physics.CheckSphere(worldPoint, NodeRadius, UnwalkableMask));
+    				grid[x,y] = new Node(walkable, worldPoint, x, y);
     			}
     		}
     	}
 
 
-    	public List<Node> GetNeighbours(Node node) 
+        public List<Node> GetNeighbors(Node node) 
         {
-    		List<Node> neighbours = new List<Node>();
+    		List<Node> neighbors = new List<Node>();
 
     		for (int x = -1; x <= 1; x++) 
             {
@@ -61,16 +72,16 @@ namespace AI
     				if (x == 0 && y == 0)
     					continue;
 
-    				int checkX = node.gridX + x;
-    				int checkY = node.gridY + y;
+    				int checkX = node.GridX + x;
+    				int checkY = node.GridY + y;
 
     				if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY) 
                     {
-    					neighbours.Add(grid[checkX,checkY]);
+    					neighbors.Add(grid[checkX,checkY]);
     				}
     			}
     		}
-    		return neighbours;
+    		return neighbors;
     	}
     	
 
@@ -90,12 +101,12 @@ namespace AI
     	void OnDrawGizmos() 
         {
     		Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x,1,gridWorldSize.y));
-    		if (grid != null && displayGridGizmos) 
+    		if (grid != null && DisplayGridGizmos) 
             {
     			foreach (Node n in grid) 
                 {
-    				Gizmos.color = (n.walkable) ? Color.white : Color.red;
-    				Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter-.1f));
+    				Gizmos.color = (n.Walkable) ? Color.white : Color.red;
+    				Gizmos.DrawCube(n.WorldPosition, Vector3.one * (nodeDiameter-.1f));
     			}
     		}
     	}

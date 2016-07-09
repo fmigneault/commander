@@ -4,6 +4,12 @@ using System;
 
 namespace AI
 {
+    public interface IHeapItem<T> : IComparable<T> 
+    {
+        int HeapIndex { get; set; }
+    }
+
+
     public class Heap<T> where T : IHeapItem<T> 
     {	
     	T[] items;
@@ -130,11 +136,5 @@ namespace AI
         {
             return item.HeapIndex * 2 + 2;
         }
-    }
-
-
-    public interface IHeapItem<T> : IComparable<T> 
-    {
-    	int HeapIndex { get; set; }
     }
 }

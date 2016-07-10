@@ -122,20 +122,58 @@ namespace Units
         }
 
 
+        // When set to true, any outside commands from 'MoveToDestination' or 'AttackTarget' are ignored
+        private GameObject lockingObject = null;
+        public bool LockedCommandInput { get; private set; }
+        public bool LockCommandInput(GameObject locker, bool lockStatus)
+        {             
+            if (locker != null && lockingObject == null)
+            {
+                lockingObject = locker;
+                LockedCommandInput = lockStatus;
+            }
+            else if (locker != null && lockingObject == locker)
+            {
+                LockedCommandInput = lockStatus;
+                if (!lockStatus) lockingObject = null;
+            }
+        }
+
+
+        // Angle offset allowed to skip unit rotation to align itself toward its destination
+        public float PermissiveDestinationAngleDelta { get; private set; }
+
+
+        // Reference to an attached HealthBar object (searched automatically at initialization)
+        public HealthBarManager HealthBar { get; private set; }
+
+
         // Function for outside calls to request new destinations
-        public void MoveToDestination(Vector3 destination)
+        public void MoveToDestination(Vector3 destination, bool overridePathfinding = false)
         {      
+            if (LockedCommandInput) return;
+
             // Stop attacking if it was, then request to move
             AttackTarget(null);
 
-            // Request a new pathfinding search to get path waypoints
-            PathRequestManager.RequestPath(transform.position, destination, OnPathFound);
+            // Request a new pathfinding search to get path waypoints or specify a linear movement accordingly
+            if (overridePathfinding)
+            {
+                destinationRequest = destination;
+                waypointPath = null;
+            }
+            else
+            {
+                PathRequestManager.RequestPath(transform.position, destination, OnPathFound);
+            }
         }
 
 
         // Function for outside calls to request new target to attack
         public void AttackTarget(GameObject target)
-        {        
+        {     
+            if (LockedCommandInput) return;
+
             // Do nothing if requested unit to attack is itself    
             if (target == gameObject) return;
 
@@ -488,21 +526,6 @@ namespace Units
         }
 
 
-        public float PermissiveDestinationAngleDelta
-        {
-            get;
-            private set;
-        }
-
-
-        // Reference to an attached HealthBar object (searched automatically at initialization)
-        public HealthBarManager HealthBar
-        {
-            get;
-            private set;
-        }
-
-
         private void InitializeParticleEffects()
         {
             // Initialize particle effects to be used with 'EffectManager', or set to null if not possible
@@ -539,7 +562,7 @@ namespace Units
 
 
         // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
-        void CheckNextWaypointInPath() 
+        private void CheckNextWaypointInPath() 
         {    
             // If the is no path specified return immediately
             if (waypointPath == null) return;
@@ -554,7 +577,7 @@ namespace Units
 
 
         // Draws the waypoints with connected lines to form the returned path to avoid obstables
-        public void OnDrawGizmos()
+        private void OnDrawGizmos()
         {
             if (waypointPath != null) 
             {

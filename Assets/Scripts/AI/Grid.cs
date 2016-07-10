@@ -40,7 +40,7 @@ namespace AI
         }
 
 
-    	void CreateGrid() 
+    	private void CreateGrid() 
         {
             
     		grid = new Node[gridSizeX,gridSizeY];
@@ -98,7 +98,7 @@ namespace AI
     	}
     	
 
-    	void OnDrawGizmos() 
+    	private void OnDrawGizmos() 
         {
     		Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x,1,gridWorldSize.y));
     		if (grid != null && DisplayGridGizmos) 

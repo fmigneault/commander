@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-//#define OUTPUT_DEBUG
+#define OUTPUT_DEBUG
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -149,10 +149,13 @@ namespace Buildings
 
 				// Transfer the building faction color to the produced unit
 				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
-                createdUnit.GetComponent<UnitManager>().FactionColor = FactionColor;
+                var createdUnitManager = createdUnit.GetComponent<UnitManager>();
+                createdUnitManager.FactionColor = FactionColor;
 
                 // Move the unit from spawn position to exit position
-                createdUnit.GetComponent<UnitManager>().MoveToDestination(ExitPosition.position);
+                createdUnitManager.MoveToDestination(ExitPosition.position, overridePathfinding: true);
+                createdUnitManager.LockCommandInput(gameObject, true);
+                StartCoroutine(MakeUnitAvailableWhenOutside(unit));
 
                 // Wait for a delay (let unit exit the building)
                 yield return new WaitForSeconds(DoorCloseWaitTime);
@@ -162,6 +165,16 @@ namespace Buildings
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);						
 			}
 		}
+
+
+        private IEnumerator MakeUnitAvailableWhenOutside(GameObject unit)
+        {            
+            if (unit != null)
+            {                
+                yield return new WaitUntil(() => unit.transform.position != ExitPosition.position);
+                unit.GetComponent<UnitManager>().LockCommandInput(gameObject, false);
+            }
+        }
 			
 
 		private void UpdateDoorPosition()

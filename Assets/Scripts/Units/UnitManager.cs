@@ -2,8 +2,11 @@
 //#define OUTPUT_DEBUG
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+
+using AI;
 
 namespace Units
 {
@@ -55,12 +58,15 @@ namespace Units
         // Parameters for building construction (only if "builder" unit)
 		public List<GameObject> ProducedBuildings = null;
 
-        // Internal memory of requested destination
+        // Internal memory of requested destination, the waypoint path and the index along these waypoints
         //    Important: Temporarily assign origin position, but will be updated on 'Start' (see reason below)
         private Vector3 destinationRequest = Vector3.zero;
+        private Vector3[] destinationWaypointPath = null;
+        private int destinationWaypointIndex = 0;
 
         // Internal memory of attack target
-        private GameObject attackTarget = null;
+        private GameObject attackTarget = null; // Currently assigned target the unit was commanded to attack    
+        private bool newAttackCommand = false;  // Indicates if the currently assigned target has just been assigned
 
         // To allow displaying effects on multiple subsequent movemnets, we require more than one effect instance
         //    Using only one instance sometimes makes it  suddenly, because following movement require the 
@@ -94,7 +100,7 @@ namespace Units
             // Therefore, 'MoveToDestination' could be called to set the desired destination, but it would immediately 
             // be overriden by the first 'Start' call when it is instanciated on the next frame.
             // Setting the variable in the 'Start' call resolves the problem no matter when the unit is instanciated.
-            if (destinationRequest.Equals(Vector3.zero)) destinationRequest = transform.position;
+            if (destinationRequest.Equals(Vector3.zero)) destinationRequest = transform.position;           
 		}
 
 
@@ -103,7 +109,8 @@ namespace Units
             // Update health, then apply actions accordingly to specified commands and current statuses
             if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
             if (Health > 0)
-            {                
+            {            
+                CheckNextWaypointInPath();    
                 UpdateAttackUnit();
                 if (!UpdateRotateUnit()) return;
                 UpdateMoveUnit();
@@ -115,18 +122,14 @@ namespace Units
         }
 
 
-        // Function for outside calls to request new destinations 
+        // Function for outside calls to request new destinations
         public void MoveToDestination(Vector3 destination)
         {      
             // Stop attacking if it was, then request to move
             AttackTarget(null);
-            destinationRequest = destination;
 
-            #if OUTPUT_DEBUG
-            #region DEBUG
-            Debug.Log("Moving");
-            #endregion
-            #endif
+            // Request a new pathfinding search to get path waypoints
+            PathRequestManager.RequestPath(transform.position, destination, OnPathFound);
         }
 
 
@@ -134,7 +137,14 @@ namespace Units
         public void AttackTarget(GameObject target)
         {        
             // Do nothing if requested unit to attack is itself    
-            if (target != gameObject) attackTarget = target;
+            if (target == gameObject) return;
+
+            // Indicate that the attack command is for a new target if different than the last one assigned
+            //    This help limiting the pathfinding requests to avoid redundant calls for a same unit 
+            if (target != attackTarget) newAttackCommand = true;
+
+            // Update the assigned target
+            attackTarget = target;
         }
 
 
@@ -210,35 +220,30 @@ namespace Units
                     }
                     else if (RespectsAttackTypes(targetUnitManager))
                     {
-                        #if OUTPUT_DEBUG
-                        #region DEBUG
-                        Debug.Log(string.Format("Respect Type + Target ({0})", attackTarget == null));
-                        #endregion
-                        #endif
-
                         // If not in range, move to minimum/maximum required attack range first
                         if (!InAttackRange(attackTarget))
                         {
-                            #if OUTPUT_DEBUG
-                            #region DEBUG
-                            Debug.Log(string.Format("Out of Range - Moving first ({0})", attackTarget == null));
-                            #endregion
-                            #endif
-
-                            destinationRequest = GetRequiredPositionInRange(attackTarget);
+                            // Request a new pathfinding search to get path waypoints only as necessary
+                            //    A new request is needed if the assigned target has changed, or if the previously
+                            //    found final waypoint in the path would make the unit out-of-range when reaching this
+                            //    final destination (ei: target has sufficiently moved away from its previous location)
+                            bool targetChangedPosition = false;
+                            if (destinationWaypointPath != null && destinationWaypointPath.Length > 0)
+                            {
+                                var lastKnowDestination = destinationWaypointPath[destinationWaypointPath.Length - 1];
+                                var targetPosition = attackTarget.transform.position;
+                                targetChangedPosition = !InAttackRange(targetPosition, lastKnowDestination);
+                            }
+                            if (newAttackCommand || targetChangedPosition)
+                            {
+                                var destinationInRange = GetRequiredPositionInRange(attackTarget);
+                                PathRequestManager.RequestPath(transform.position, destinationInRange, OnPathFound);
+                                newAttackCommand = false;   // Reset for next calls
+                            }
                         }
-                        // Otherwise, cancel movement
-                        // This allows attacking right away an in-range unit
-                        else
-                        {
-                            #if OUTPUT_DEBUG
-                            #region DEBUG
-                            Debug.Log(string.Format("In Range - Stop moving ({0})", attackTarget == null));
-                            #endregion
-                            #endif
-
-                            destinationRequest = transform.position;
-                        }
+                        // If already within attack range, cancel any movement
+                        //    This allows attacking right away the target without moving the unit
+                        else destinationRequest = transform.position;
                     }
                     else attackTarget = null;   // Reject any set target if it doesn't match any condition
                 }
@@ -246,12 +251,6 @@ namespace Units
 
             // Attack when in range or cancel attack if null
             AttackDelegate(attackTarget);
-
-            #if OUTPUT_DEBUG
-            #region DEBUG
-            if (tag == "TemperedHammer") Debug.Log("In Range - Attacking");
-            #endregion
-            #endif
         }
 	
 
@@ -262,11 +261,17 @@ namespace Units
 		}
 
 
+        private bool InAttackRange(Vector3 targetPosition, Vector3 referencePosition)
+        {
+            double distance = Vector3.Distance(referencePosition, targetPosition);
+            if (distance >= MinAttackRange && distance <= MaxAttackRange) return true;
+            return false;
+        }
+
+
 		public bool InAttackRange(GameObject target) 
-		{
-			double distance = Vector3.Distance(transform.position, target.transform.position);
-			if (distance >= MinAttackRange && distance <= MaxAttackRange) return true;
-			return false;
+		{            
+            return InAttackRange(target.transform.position, transform.position);
 		}
 
 
@@ -388,6 +393,57 @@ namespace Units
             foreach (var effect in movementEffects) if (effect != null) Destroy(effect);
             if (DestroyExplosionEffect != null) Destroy(DestroyExplosionEffect);
             if (tag == "Tank") GetComponent<TankManager>().DestroyInstanciatedReferences();
+        }
+
+
+        // Callback method for when the path request has finished being processed 
+        public void OnPathFound(Vector3[] newPath, bool pathSuccess)
+        {
+            if (pathSuccess)
+            {                             
+                destinationWaypointPath = newPath;  // Update the found path waypoints
+                destinationWaypointIndex = 0;       // Start at the first waypoint position as a destination
+                destinationRequest = destinationWaypointPath[0];    // Initial waypoint in path as first destination
+            }
+        }
+
+
+        // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
+        void CheckNextWaypointInPath() 
+        {    
+            // If the is no path specified return immediately
+            if (destinationWaypointPath == null) return;
+
+            // If the currently set waypoint destination is reached, pass to the next waypoint in the path
+            if (destinationWaypointPath[destinationWaypointIndex] == transform.position) destinationWaypointIndex++;
+
+            // If the last waypoint was reached, the unit is at the final destination. Unset the path waypoints
+            // Otherwise, adjust the next waypoints as the current unit's required destination
+            if (destinationWaypointIndex >= destinationWaypointPath.Length) destinationWaypointPath = null;
+            else destinationRequest = destinationWaypointPath[destinationWaypointIndex];
+        }
+
+
+        // Draws the waypoints with connected lines to form the returned path to avoid obstables
+        public void OnDrawGizmos()
+        {
+            if (destinationWaypointPath != null) 
+            {
+                for (int i = destinationWaypointIndex; i < destinationWaypointPath.Length; i++) 
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawCube(destinationWaypointPath[i], Vector3.one);
+
+                    if (i == destinationWaypointIndex) 
+                    {
+                        Gizmos.DrawLine(transform.position, destinationWaypointPath[i]);
+                    }
+                    else 
+                    {
+                        Gizmos.DrawLine(destinationWaypointPath[i-1], destinationWaypointPath[i]);
+                    }
+                }
+            }
         }
 	}
 }

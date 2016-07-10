@@ -912,6 +912,7 @@ MonoBehaviour:
   Unit: {fileID: 100154}
   OffsetAboveUnit: 5
   SizeOnScreen: 3
+  ForceVisible: 0
 --- !u!114 &11458872
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -935,8 +936,8 @@ MonoBehaviour:
   Health: 65
   HitPoints: 10
   ProductionDelay: 10
-  MovingSpeed: 10
-  RotationSpeed: 45
+  MovingSpeed: 12
+  RotationSpeed: 80
   DestructionMinimumDelay: 5
   AfterDestructionDelay: 4
   DestructionTranlateSpeed: 0.01

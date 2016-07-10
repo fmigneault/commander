@@ -63,7 +63,7 @@ namespace AI
 
         public List<Node> GetNeighbors(Node node) 
         {
-    		List<Node> neighbors = new List<Node>();
+    		var neighbors = new List<Node>();
 
     		for (int x = -1; x <= 1; x++) 
             {

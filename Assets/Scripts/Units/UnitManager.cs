@@ -11,7 +11,7 @@ using AI;
 namespace Units
 {
 	public class UnitManager : MonoBehaviour 
-	{
+	{                
 		// General parameters
 		public string Name = "";
 		public string Code = "";
@@ -125,7 +125,7 @@ namespace Units
         // When set to true, any outside commands from 'MoveToDestination' or 'AttackTarget' are ignored
         private GameObject lockingObject = null;
         public bool LockedCommandInput { get; private set; }
-        public bool LockCommandInput(GameObject locker, bool lockStatus)
+        public void LockCommandInput(GameObject locker, bool lockStatus)
         {             
             if (locker != null && lockingObject == null)
             {

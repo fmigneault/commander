@@ -1,5 +1,5 @@
 ﻿// Display debugging/logging info on console
-#define OUTPUT_DEBUG
+//#define OUTPUT_DEBUG
 
 using UnityEngine;
 using UnityEngine.UI;

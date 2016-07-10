@@ -61,8 +61,8 @@ namespace Units
         // Internal memory of requested destination, the waypoint path and the index along these waypoints
         //    Important: Temporarily assign origin position, but will be updated on 'Start' (see reason below)
         private Vector3 destinationRequest = Vector3.zero;
-        private Vector3[] destinationWaypointPath = null;
-        private int destinationWaypointIndex = 0;
+        private Vector3[] waypointPath = null;
+        private int waypointIndex = 0;
 
         // Internal memory of attack target
         private GameObject attackTarget = null; // Currently assigned target the unit was commanded to attack    
@@ -203,15 +203,17 @@ namespace Units
                                                               RotationSpeed * Time.deltaTime);
                 return false;
             }
-            return true;    // Finished rotation (already pointing toward target)
+            return true;    // Finished rotation (already approximately pointing toward target)
         }
 
 
+
         private void UpdateAttackUnit()
-        {
+        {            
+            bool inSight = true;
             if (attackTarget != null)
             {
-                UnitManager targetUnitManager = attackTarget.GetComponent<UnitManager>();
+                var targetUnitManager = attackTarget.GetComponent<UnitManager>();
                 if (targetUnitManager != null)
                 {
                     if (targetUnitManager.Health < 0)
@@ -220,39 +222,170 @@ namespace Units
                     }
                     else if (RespectsAttackTypes(targetUnitManager))
                     {
-                        // If not in range, move to minimum/maximum required attack range first
-                        if (!InAttackRange(attackTarget))
+                        bool inRage = InAttackRange(attackTarget);
+                        bool targetChangedPosition = false;
+                        var targetPosition = attackTarget.transform.position;
+                        if (waypointPath != null && waypointPath.Length > 0)
                         {
-                            // Request a new pathfinding search to get path waypoints only as necessary
-                            //    A new request is needed if the assigned target has changed, or if the previously
-                            //    found final waypoint in the path would make the unit out-of-range when reaching this
-                            //    final destination (ei: target has sufficiently moved away from its previous location)
-                            bool targetChangedPosition = false;
-                            if (destinationWaypointPath != null && destinationWaypointPath.Length > 0)
-                            {
-                                var lastKnowDestination = destinationWaypointPath[destinationWaypointPath.Length - 1];
-                                var targetPosition = attackTarget.transform.position;
-                                targetChangedPosition = !InAttackRange(targetPosition, lastKnowDestination);
-                            }
-                            if (newAttackCommand || targetChangedPosition)
-                            {
-                                var destinationInRange = GetRequiredPositionInRange(attackTarget);
-                                PathRequestManager.RequestPath(transform.position, destinationInRange, OnPathFound);
-                                newAttackCommand = false;   // Reset for next calls
-                            }
+                            var lastKnownTargetPosition = waypointPath[waypointPath.Length - 1];
+                            inSight = (waypointPath.Length - waypointIndex) <= 1;
+
+                            // Checking an area instead of simply verifying for different positions slightly limits the
+                            // quantity of pathfinding requested without affecting too much the destination precision.
+                            //    The target will have to move sufficiently away to trigger a new calculation instead 
+                            //    of extensively calling new requests on each frame as target position are continuously 
+                            //    changing as displacements are occuring.
+                            targetChangedPosition = !InRangeArea(targetPosition, lastKnownTargetPosition);
                         }
-                        // If already within attack range, cancel any movement
+
+                        // If already within attack range for a new target to attack, cancel any movement
                         //    This allows attacking right away the target without moving the unit
-                        else destinationRequest = transform.position;
+                        if (newAttackCommand && inRage)
+                        {
+                            destinationRequest = transform.position;
+                            newAttackCommand = false;   // Reset for next calls
+                        }
+
+                        // If the unit just got in-range but wasn't previously (ie: was moving and reached the target),
+                        // return a midway position between the minimum and maximum attack range to produce realistic
+                        // approach of the unit toward its target. 
+                        //    Since stopping immediately at the position corresponding to the maximum distance as the
+                        //    unit justs get within range would require another movement as soon a the target moves 
+                        //    slightly away, this small position adjustment makes the movements look smoother.
+                        else if (inSight && inRage && !targetChangedPosition)
+                        {
+                            destinationRequest = GetPositionInRange(attackTarget);
+                        }
+                            
+                        // Request a new pathfinding search to get path waypoints only as necessary
+                        //    - A new request is needed if the assigned target has changed (new target specified)
+                        //    - If the  target has sufficiently moved away from its previously known location and
+                        //      that it was previously directly in sight, the new position might make it out of 
+                        //      sight by an obstacle, so validation is required.
+                        //
+                        else if (newAttackCommand || targetChangedPosition)
+                        {
+                            PathRequestManager.RequestPath(transform.position, targetPosition, OnPathFound);
+                            newAttackCommand = false;   // Reset for next calls
+                        }
+
+// If too close to the target, move away until the minimum range is respected, but keep as close a possible
+// to ensure that the target will be in range for longer if it tries to escape away
+//                            if (distance < MinAttackRange)
+//                            {
+//                                return (transform.position - target.transform.position) * MinAttackRange / distance;
+//                            }
+                                                    
                     }
-                    else attackTarget = null;   // Reject any set target if it doesn't match any condition
+                    // Reject any set target if it doesn't match any previous condition
+                    else attackTarget = null;
                 }
             }
 
-            // Attack when in range or cancel attack if null
-            AttackDelegate(attackTarget);
+            // Attack movement and shooting animation when there is a target in range and in sight
+            // Otherwise cancel any attack command temporarily
+            // In sight if on the last waypoint path segment avoids shooting through obstacles
+            AttackDelegate(inSight ? attackTarget : null);
         }
-	
+
+
+#region SOMEWHAT GOOD ATTACK AI
+//        private void UpdateAttackUnit()
+//        {            
+//            bool inSight = true;
+//            if (attackTarget != null)
+//            {
+//                var targetUnitManager = attackTarget.GetComponent<UnitManager>();
+//                if (targetUnitManager != null)
+//                {
+//                    if (targetUnitManager.Health < 0)
+//                    {
+//                        attackTarget = null;
+//                    }
+//                    else if (RespectsAttackTypes(targetUnitManager))
+//                    {
+//                        bool targetChangedPosition = false;
+//                        var targetPosition = attackTarget.transform.position;
+//                        if (waypointPath != null && waypointPath.Length > 0)
+//                        {
+//                            var lastKnownTargetPosition = waypointPath[waypointPath.Length - 1];
+//                            inSight = (waypointPath.Length - waypointIndex) <= 1;
+//
+//                            // Checking an area instead of simply verifying for different positions slightly limits the
+//                            // quantity of pathfinding requested without affecting too much the destination precision.
+//                            //    The target will have to move sufficiently away to trigger a new calculation instead 
+//                            //    of extensively calling new requests on each frame as target position are continuously 
+//                            //    changing as displacements are occuring.
+//                            targetChangedPosition = !InRangeArea(targetPosition, lastKnownTargetPosition);
+//                        }
+//
+//                        // If not in range, move to minimum/maximum required attack range first
+//                        // If not in sight, the path must be found to go around the obstacle blocking the view
+//                        if (!InAttackRange(attackTarget) || !inSight)
+//                        {
+//                            // Request a new pathfinding search to get path waypoints only as necessary
+//                            //    - A new request is needed if the assigned target has changed (new target specified)
+//                            //    - If the  target has sufficiently moved away from its previously known location and
+//                            //      that it was previously directly in sight, the new position might make it out of 
+//                            //      sight by an obstacle, so validation is required.
+//                            //
+//                            if (newAttackCommand || (targetChangedPosition && inSight))
+//                            {
+//                                PathRequestManager.RequestPath(transform.position, targetPosition, OnPathFound);
+//                                newAttackCommand = false;   // Reset for next calls
+//                            }
+//
+//
+//                            // If too close to the target, move away until the minimum range is respected, but keep as close a possible
+//                            // to ensure that the target will be in range for longer if it tries to escape away
+////                            if (distance < MinAttackRange)
+////                            {
+////                                return (transform.position - target.transform.position) * MinAttackRange / distance;
+////                            }
+//
+//
+//
+//                            // If not on the last path segment, simply update the last waypoint with the new position 
+////                            else if (targetChangedPosition && !inSight)
+////                            {
+////                                waypointPath[waypointPath.Length - 1] = targetPosition;
+////                            }
+//                        }
+//                        // If already within attack range for a new target to attack, cancel any movement
+//                        //    This allows attacking right away the target without moving the unit
+//                        else if (newAttackCommand)
+//                        {
+//                            destinationRequest = transform.position;
+//                            newAttackCommand = false;   // Reset for next calls
+//                        }
+//                        // If in attack range but the target is not in sight, an obstacle is blocking the way 
+//                        // An new path must be found
+//                        else if (targetChangedPosition)
+//                        {
+//                            PathRequestManager.RequestPath(transform.position, targetPosition, OnPathFound);
+//                        }
+//                        // If the unit just got in-range but wasn't previously (ie: was moving and reached the target),
+//                        // return a midway position between the minimum and maximum attack range to produce realistic
+//                        // approach of the unit toward its target. 
+//                        //    Since stopping immediately at the position corresponding to the maximum distance as the
+//                        //    unit justs get within range would require another movement as soon a the target moves 
+//                        //    slightly away, this small position adjustment makes the movements look smoother.
+//                        else if (inSight)
+//                        {
+//                            destinationRequest = GetPositionInRange(attackTarget);
+//                        }
+//                    }
+//                    // Reject any set target if it doesn't match any previous condition
+//                    else attackTarget = null;
+//                }
+//            }
+//
+//            // Attack movement and shooting animation when there is a target in range and in sight
+//            // Otherwise cancel any attack command temporarily
+//            // In sight if on the last waypoint path segment avoids shooting through obstacles
+//            AttackDelegate(inSight ? attackTarget : null);
+//        }
+#endregion
 
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
 		{
@@ -261,28 +394,25 @@ namespace Units
 		}
 
 
-        private bool InAttackRange(Vector3 targetPosition, Vector3 referencePosition)
+        private bool InRangeArea(Vector3 targetPosition, Vector3 lastKnownPosition)
         {
-            double distance = Vector3.Distance(referencePosition, targetPosition);
-            if (distance >= MinAttackRange && distance <= MaxAttackRange) return true;
-            return false;
+            // Check an approximate area around the last known position
+            return Vector3.Distance(targetPosition, lastKnownPosition) <= 5;
         }
 
 
 		public bool InAttackRange(GameObject target) 
-		{            
-            return InAttackRange(target.transform.position, transform.position);
+		{       
+            double distance = Vector3.Distance(target.transform.position, transform.position);
+            return (distance >= MinAttackRange && distance <= MaxAttackRange);
 		}
 
 
-        private Vector3 GetRequiredPositionInRange(GameObject target)
+        private Vector3 GetPositionInRange(GameObject target)
         {            
             float distance = Vector3.Distance(transform.position, target.transform.position);
-            if (distance < MinAttackRange)
-            {
-                return (transform.position - target.transform.position) * MinAttackRange / distance;
-            }
-            return Vector3.Lerp(target.transform.position, transform.position, MaxAttackRange / distance);
+            float midRange = (MaxAttackRange - MinAttackRange) / 2;
+            return Vector3.Lerp(target.transform.position, transform.position, (MaxAttackRange - midRange) / distance);
         }
 
 
@@ -401,9 +531,9 @@ namespace Units
         {
             if (pathSuccess)
             {                             
-                destinationWaypointPath = newPath;  // Update the found path waypoints
-                destinationWaypointIndex = 0;       // Start at the first waypoint position as a destination
-                destinationRequest = destinationWaypointPath[0];    // Initial waypoint in path as first destination
+                waypointPath = newPath;                 // Update the found path waypoints
+                waypointIndex = 0;                      // Start at the first waypoint position as a destination
+                destinationRequest = waypointPath[0];   // Initial waypoint in path as first destination
             }
         }
 
@@ -412,35 +542,34 @@ namespace Units
         void CheckNextWaypointInPath() 
         {    
             // If the is no path specified return immediately
-            if (destinationWaypointPath == null) return;
+            if (waypointPath == null) return;
 
+            // If the last waypoint was reached, the unit is at the final destination. Unset the path waypoints.
+            if (waypointIndex >= waypointPath.Length) waypointPath = null;
             // If the currently set waypoint destination is reached, pass to the next waypoint in the path
-            if (destinationWaypointPath[destinationWaypointIndex] == transform.position) destinationWaypointIndex++;
-
-            // If the last waypoint was reached, the unit is at the final destination. Unset the path waypoints
+            else if (waypointPath[waypointIndex] == transform.position) waypointIndex++;
             // Otherwise, adjust the next waypoints as the current unit's required destination
-            if (destinationWaypointIndex >= destinationWaypointPath.Length) destinationWaypointPath = null;
-            else destinationRequest = destinationWaypointPath[destinationWaypointIndex];
+            else destinationRequest = waypointPath[waypointIndex];
         }
 
 
         // Draws the waypoints with connected lines to form the returned path to avoid obstables
         public void OnDrawGizmos()
         {
-            if (destinationWaypointPath != null) 
+            if (waypointPath != null) 
             {
-                for (int i = destinationWaypointIndex; i < destinationWaypointPath.Length; i++) 
+                for (int i = waypointIndex; i < waypointPath.Length; i++) 
                 {
                     Gizmos.color = Color.black;
-                    Gizmos.DrawCube(destinationWaypointPath[i], Vector3.one);
+                    Gizmos.DrawCube(waypointPath[i], Vector3.one);
 
-                    if (i == destinationWaypointIndex) 
+                    if (i == waypointIndex) 
                     {
-                        Gizmos.DrawLine(transform.position, destinationWaypointPath[i]);
+                        Gizmos.DrawLine(transform.position, waypointPath[i]);
                     }
                     else 
                     {
-                        Gizmos.DrawLine(destinationWaypointPath[i-1], destinationWaypointPath[i]);
+                        Gizmos.DrawLine(waypointPath[i-1], waypointPath[i]);
                     }
                 }
             }

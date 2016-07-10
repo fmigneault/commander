@@ -12,7 +12,7 @@ GameObject:
   - 114: {fileID: 11452876}
   - 114: {fileID: 11492514}
   m_Layer: 0
-  m_Name: AStar
+  m_Name: Pathfinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,6 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Algorithm: 2
+  Cost: 0
 --- !u!114 &11492514
 MonoBehaviour:
   m_ObjectHideFlags: 1

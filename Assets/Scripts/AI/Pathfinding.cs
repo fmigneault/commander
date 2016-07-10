@@ -1,21 +1,30 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
 
 namespace AI
 {
     public enum AlgorithmType
     {
-        A_STAR,                 // Basic pathfinding implementation
-        A_STAR_SQUARED_COST,    // Uses other distance cost calculation method, but produce the same output result
-        THETA_STAR              // Adds line-of-sight evaluation to allow any-angle smoother path trajectories
+        A_STAR,                 // Basic pathfinding implementation using linear/diagonal 45 degree connected nodes
+        THETA_STAR,             // Adds line-of-sight evaluation to allow any-angle smoother path trajectories
+        LAZY_THETA_STAR,        // Faster evaluation for any-angle trajectories by limiting line-of-sight calls
     };
+
+
+    // Same algorithms but using other distance cost calculation method, produce similar output results
+    public enum CostType
+    {
+        REGULAR,
+        SQUARED
+    }
 
 
     public class Pathfinding : MonoBehaviour 
     {
         public AlgorithmType Algorithm = AlgorithmType.A_STAR;
+        public CostType Cost = CostType.REGULAR;
 
     	private PathRequestManager requestManager;
     	private Grid grid;
@@ -47,15 +56,37 @@ namespace AI
             {
     			var openSet = new Heap<Node>(grid.MaxSize);     // Set of nodes to be evaluated
     			var closedSet = new HashSet<Node>();            // Set of nodes already evaluated
-    			openSet.Add(startNode);
+
+                startNode.Parent = startNode;   // Initial condition to avoid null reference using Theta*
+    			openSet.Add(startNode);         // Add the starting node as the only one known initially
     			
     			while (openSet.Count > 0)
                 {
                     // First node in the heap is the one with the lowest F cost by default
     				Node currentNode = openSet.RemoveFirst();
     				closedSet.Add(currentNode);
+
+                    // Lazy Theta* pre-setting of visible neighbors to limit line-of-sight calls only to required cases
+                    if (Algorithm == AlgorithmType.LAZY_THETA_STAR && !InLineOfSight(currentNode.Parent, currentNode))
+                    {
+                        int min = int.MaxValue;
+                        foreach (Node neighbor in grid.GetNeighbors(currentNode))
+                        {
+                            if (closedSet.Contains(neighbor))
+                            {
+                                int gCostNeighbor = gCostValue(neighbor.gCost);
+                                int moveCostNeighbor = gCostNeighbor + NodeDistance(neighbor, currentNode);
+                                min = Math.Min(min, moveCostNeighbor);
+                                if (min == moveCostNeighbor)
+                                {
+                                    currentNode.Parent = neighbor;
+                                    currentNode.gCost = min;
+                                }
+                            }
+                        }
+                    }
     				
-                    // Path found if current is the target, finish searching
+                    // Path found if current node is the target, finish searching
     				if (currentNode == targetNode)
                     {
     					pathSuccess = true;
@@ -72,51 +103,41 @@ namespace AI
                         //    Instead of limiting to 8-connected neighbors, therefore imposing 45 degree angles, the 
                         //    parents of the neighbors and the current node are used to look at higher distances as 
                         //    long as the evaluated distance remains in line-of-sight (ie: doesn't traverse unwalkable)
-                        if (Algorithm == AlgorithmType.THETA_STAR && currentNode.Parent != null && 
-                            InLineOfSight(currentNode.Parent, neighbor))
+                        if ((Algorithm == AlgorithmType.THETA_STAR && InLineOfSight(currentNode.Parent, neighbor)) ||
+                            Algorithm == AlgorithmType.LAZY_THETA_STAR)
                         {       
-                            int gCostParent = currentNode.Parent.gCost * currentNode.Parent.gCost;
-                            int gCostNeighbor = neighbor.gCost * neighbor.gCost;
-                            int moveCostNeighborParent = gCostParent + NodeDistance(currentNode.Parent, neighbor);
+                            int gCostCurrentParent = gCostValue(currentNode.Parent.gCost);
+                            int gCostNeighbor = gCostValue(neighbor.gCost * neighbor.gCost);
+                            int moveCostNeighborParent = gCostCurrentParent + NodeDistance(currentNode.Parent, neighbor);
                             if (moveCostNeighborParent < gCostNeighbor || !openSet.Contains(neighbor))
                             {
-                                // Update node costs if a better path is found using the parent nodes
+                                // Update node costs since a better path is found using the parent nodes
                                 neighbor.gCost = currentNode.Parent.gCost + NodeDistance(currentNode.Parent, neighbor);
                                 neighbor.hCost = NodeDistance(neighbor, targetNode);
                                 neighbor.Parent = currentNode.Parent;
 
-                                // Add neighbor to the open list so it doesn't get evaluated again
+                                // Add neighbor to the open list as a remaining potential path to explore
                                 if (!openSet.Contains(neighbor)) openSet.Add(neighbor);
                             }   
                         }
                         // Path 1 (default): Employed by both A* and Theta* (if not in line-of-sight)
+                        // Not used by Lazy Theta* as it directly goes to Path 2 using the line-of-sight pre-evaluation
                         else
                         {
                             // Cost calculation must be adapted according to the distance method
                             //    If using the local 8-connected neighbors, we simply apply the stardard formulat
-                            //    If using the squared euclidian distance to avoid float values, gCost must be squared
-                            int gCostNeighbor = 0;
-                            int gCostCurrent = 0;
-                            if (Algorithm == AlgorithmType.A_STAR)
-                            {
-                                gCostCurrent = currentNode.gCost;
-                                gCostNeighbor = neighbor.gCost;
-                            }
-                            else if (Algorithm == AlgorithmType.A_STAR_SQUARED_COST ||
-                                     Algorithm == AlgorithmType.THETA_STAR)
-                            {
-                                gCostCurrent = currentNode.gCost * currentNode.gCost;
-                                gCostNeighbor = neighbor.gCost * neighbor.gCost;
-                            }
+                            //    If using the squared Euclidian distance to avoid float values, gCost must be squared
+                            int gCostNeighbor = gCostValue(neighbor.gCost);
+                            int gCostCurrent = gCostValue(currentNode.gCost);
                             int moveCostNeighbor = gCostCurrent + NodeDistance(currentNode, neighbor);
                             if (moveCostNeighbor < gCostNeighbor || !openSet.Contains(neighbor))
                             {
-                                // Update node costs if a better path is found comapred to the previously saved cost
+                                // Update node costs since a better path is found comapred to the previously saved cost
                                 neighbor.gCost = currentNode.gCost + NodeDistance(currentNode, neighbor);
                                 neighbor.hCost = NodeDistance(neighbor, targetNode);
                                 neighbor.Parent = currentNode;
 
-                                // Add neighbor to the open list so it doesn't get evaluated again
+                                // Add neighbor to the open list as a remaining potential path to explore
                                 if (!openSet.Contains(neighbor)) openSet.Add(neighbor);
                             }   
                         }
@@ -132,15 +153,15 @@ namespace AI
     	
         // Retrace back the found path from the end target node up to the starting node
     	Vector3[] RetracePath(Node startNode, Node endNode) 
-        {
+        {            
     		var path = new List<Node>();
     		Node currentNode = endNode;
-    		
-    		while (currentNode != startNode) 
+    		            
+            while (currentNode != null && currentNode != startNode) 
             {
     			path.Add(currentNode);
     			currentNode = currentNode.Parent;
-    		}
+    		}            
                 
             // Reverse the order of the found waypoints going from destination to current starting position
             Vector3[] waypoints = GetPathWaypointsFromNodes(path);
@@ -154,11 +175,11 @@ namespace AI
             // Find key waypoints only where there is a direction change to avoid redundant points along a strait line
             //    Only required when using A* since Theta* automatically does this using the in line-of-sight check
             Vector3[] waypoints = null;
-            if (Algorithm == AlgorithmType.A_STAR || Algorithm == AlgorithmType.A_STAR_SQUARED_COST)
+            if (Algorithm == AlgorithmType.A_STAR)
             {
                 waypoints = SimplifyPath(nodePath);
             }
-            else if (Algorithm == AlgorithmType.THETA_STAR)
+            else if (Algorithm == AlgorithmType.THETA_STAR || Algorithm == AlgorithmType.LAZY_THETA_STAR)
             {
                 waypoints = new Vector3[nodePath.Count];
                 for (int i = 0; i < nodePath.Count; i++) waypoints[i] = nodePath[i].WorldPosition;
@@ -255,21 +276,36 @@ namespace AI
             int dstX = Mathf.Abs(nodeA.GridX - nodeB.GridX);
             int dstY = Mathf.Abs(nodeA.GridY - nodeB.GridY);
 
-            if (Algorithm == AlgorithmType.A_STAR)
+            if (Algorithm == AlgorithmType.A_STAR && Cost == CostType.REGULAR)
             {
                 // Diagonal movement cost = 14, Linear movement cost = 10
                 //    Comes for 1 distance between 4-connected nodes and sqrt(2) ~= 1.4 for diagonal, multiplied by 1
                 if (dstX > dstY) return 14 * dstY + 10 * (dstX - dstY);
                 return 14 * dstX + 10 * (dstY - dstX);
             }
-            else if (Algorithm == AlgorithmType.A_STAR_SQUARED_COST || Algorithm == AlgorithmType.THETA_STAR)
+            else if ((Algorithm == AlgorithmType.THETA_STAR || Algorithm == AlgorithmType.LAZY_THETA_STAR) &&
+                     Cost == CostType.REGULAR)
             {
-                // Use the square of the euclidian distance
+                // Use traditional Euclidian distance
+                return (int)Mathf.Sqrt(dstX * dstX + dstY * dstY);
+            }
+            else if ((Algorithm == AlgorithmType.A_STAR || Algorithm == AlgorithmType.THETA_STAR ||
+                      Algorithm == AlgorithmType.LAZY_THETA_STAR) && Cost == CostType.SQUARED)
+            {
+                // Use the square of the Euclidian distance
                 //    Avoid using the more costly square root formula, and also avoids the use of float values
                 return dstX * dstX + dstY * dstY;
             }
 
             return -1;  // In case of unsupported algorithm type (compiler requires return on all paths)
+        }
+
+
+        // Return proper cost according to current algorithm
+        int gCostValue(int gCost)
+        {
+            if (Cost == CostType.SQUARED) return gCost * gCost;
+            return gCost;
         }
     }
 }

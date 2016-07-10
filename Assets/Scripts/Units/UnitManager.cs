@@ -100,7 +100,7 @@ namespace Units
             // Therefore, 'MoveToDestination' could be called to set the desired destination, but it would immediately 
             // be overriden by the first 'Start' call when it is instanciated on the next frame.
             // Setting the variable in the 'Start' call resolves the problem no matter when the unit is instanciated.
-            if (destinationRequest.Equals(Vector3.zero)) destinationRequest = transform.position;
+            if (destinationRequest.Equals(Vector3.zero)) destinationRequest = transform.position;           
 		}
 
 
@@ -109,7 +109,8 @@ namespace Units
             // Update health, then apply actions accordingly to specified commands and current statuses
             if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
             if (Health > 0)
-            {                
+            {            
+                CheckNextWaypointInPath();    
                 UpdateAttackUnit();
                 if (!UpdateRotateUnit()) return;
                 UpdateMoveUnit();
@@ -399,34 +400,27 @@ namespace Units
         public void OnPathFound(Vector3[] newPath, bool pathSuccess)
         {
             if (pathSuccess)
-            {                
+            {                             
                 destinationWaypointPath = newPath;  // Update the found path waypoints
                 destinationWaypointIndex = 0;       // Start at the first waypoint position as a destination
-                StopCoroutine("FollowPath");        // Stop updating the waypoints of a previous path request
-                StartCoroutine("FollowPath");       // Gradually update the waypoints of the new path request
+                destinationRequest = destinationWaypointPath[0];    // Initial waypoint in path as first destination
             }
         }
 
 
         // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
-        IEnumerator FollowPath() 
-        {     
-            var currentWaypoint = destinationWaypointPath[0];
-            while (true) 
-            {
-                if (transform.position == currentWaypoint) 
-                {
-                    destinationWaypointIndex++;
-                    if (destinationWaypointIndex >= destinationWaypointPath.Length) 
-                    {
-                        yield break;
-                    }
-                    currentWaypoint = destinationWaypointPath[destinationWaypointIndex];
-                }
+        void CheckNextWaypointInPath() 
+        {    
+            // If the is no path specified return immediately
+            if (destinationWaypointPath == null) return;
 
-                destinationRequest = currentWaypoint;
-                yield return null;
-            }
+            // If the currently set waypoint destination is reached, pass to the next waypoint in the path
+            if (destinationWaypointPath[destinationWaypointIndex] == transform.position) destinationWaypointIndex++;
+
+            // If the last waypoint was reached, the unit is at the final destination. Unset the path waypoints
+            // Otherwise, adjust the next waypoints as the current unit's required destination
+            if (destinationWaypointIndex >= destinationWaypointPath.Length) destinationWaypointPath = null;
+            else destinationRequest = destinationWaypointPath[destinationWaypointIndex];
         }
 
 

@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+using System.Diagnostics;
 
 namespace AI
 {
@@ -15,6 +16,8 @@ namespace AI
     	static PathRequestManager instance;
     	Pathfinding pathfinding;
     	bool isProcessingPath;
+
+        private Stopwatch timer;    // For testing algorithm performances
 
 
         struct PathRequest 
@@ -37,6 +40,9 @@ namespace AI
         {
     		instance = this;
     		pathfinding = GetComponent<Pathfinding>();
+
+            // Testing
+            timer = new Stopwatch();
     	}
 
 
@@ -52,10 +58,12 @@ namespace AI
         // Tries to process the next available request in the queue
     	void TryProcessNext() 
         {
-    		if (!isProcessingPath && pathRequestQueue.Count > 0)
+            if (!isProcessingPath && instance.pathRequestQueue.Count > 0)
             {
-    			currentPathRequest = pathRequestQueue.Dequeue();
+                currentPathRequest = instance.pathRequestQueue.Dequeue();
     			isProcessingPath = true;
+
+                timer.Start();
                 pathfinding.StartFindPath(currentPathRequest.PathStart, currentPathRequest.PathEnd);
     		}
     	}
@@ -64,7 +72,11 @@ namespace AI
         // Callback the function passed to indicate to the unit that the path request has been processed
     	public void FinishedProcessingPath(Vector3[] path, bool success) 
         {
-    		currentPathRequest.Callback(path,success);
+            timer.Stop();
+            UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms", timer.ElapsedMilliseconds));
+            timer.Reset();
+
+    		currentPathRequest.Callback(path, success);
     		isProcessingPath = false;
     		TryProcessNext();
     	}

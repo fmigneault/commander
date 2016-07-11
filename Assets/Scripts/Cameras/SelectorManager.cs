@@ -18,20 +18,20 @@ namespace Cameras
         // Tags are displayed using a custom editor that allows to select tags using the existing ones in a list
         // Hide the values displayed by default when public (but have to be public to allow accessing them)
         [HideInInspector]
-		public string[] SelectTags;			// Tags of GameObjects which selection is permitted
+		public string[] SelectTagsByPriority;   // Tags of GameObjects which selection is permitted
+        [HideInInspector]                       // (priority sorted from most to least important)
+        public string[] AttackTagsByPriority;   // Tags of GameObjects which unit being attacked is permitted
+        [HideInInspector]                       // (priority sorted from most to least important)
+        public string BuilderTag;		        // Tag of GameObjects which are builder units
         [HideInInspector]
-        public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
+        public string BuildingTag;			    // Tag of GameObjects which are selectable buildings
         [HideInInspector]
-        public string BuilderTag;		    // Tag of GameObjects which are builder units
-        [HideInInspector]
-        public string BuildingTag;			// Tag of GameObjects which are selectable buildings
-        [HideInInspector]
-        public string ButtonTag;            // Tag corresponding to a UI button
+        public string ButtonTag;                // Tag corresponding to a UI button
 
 		// GUI Elements
-        public Canvas CanvasGUI;            // The overall canvas reference
-		public GameObject IconPanel;        // Contains the icons to display the creatable units or buildings      
-        public GameObject SelectionBox;     // Rectangle image for region selection of units
+        public Canvas CanvasGUI;                // The overall canvas reference
+		public GameObject IconPanel;            // Contains the icons to display the creatable units or buildings      
+        public GameObject SelectionBox;         // Rectangle image for region selection of units
 
         // Terrain
         public Terrain GroundTerrain;
@@ -175,26 +175,56 @@ namespace Cameras
         {
             GameObject dummy;
             Vector3 terrainPosition;
-            GetPointedObject(mousePosition, out dummy, out terrainPosition);
+            var priorityTerrain = new[] { GroundTerrain.tag };
+            GetPointedObject(mousePosition, out dummy, out terrainPosition, priorityTerrain);
             return terrainPosition;
         }
 
 
         // Returns true if any object was hit, adjusts 'hitObject' and the 'terrainPosition' accordingly
-        // If no object was hit, adjust 'terrainPosition' accordingly but return false and no 'hitObject'
-        private bool GetPointedObject(Vector3 mousePosition, out GameObject hitObject, out Vector3 terrainPosition)
+        // If no specific object gets hit, adjust 'terrainPosition', return false and 'hitObject' is the terrain
+        // If many objects are aligned or overlapping, the selection of the hit object is done by descending priority
+        private bool GetPointedObject(Vector3 mousePosition, out GameObject hitObject, 
+                                      out Vector3 terrainPosition, string[] tagPriority = null)
 		{
-			// Draw ray from camera toward pointed position
-			Ray ray = cam.ScreenPointToRay(mousePosition);
-			RaycastHit hit;
-            bool success = Physics.Raycast(ray.origin, ray.direction, out hit, maxDistance);           
+            // Draw ray from camera toward pointed position
+            var ray = cam.ScreenPointToRay(mousePosition);
+            var hits = Physics.RaycastAll(ray, maxDistance);
+            var hitPriority = new RaycastHit();
+            bool success = false;
+
+            // Obtain the hit object by tag verification
+            if (hits != null && hits.Any())
+            {
+                if (tagPriority != null && tagPriority.Any())
+                {
+                    // Find the hit object by tag priority
+                    var hitTags = hits.Select(h => h.collider.tag);
+                    foreach (var t in tagPriority)
+                    {
+                        var tagMatches = hitTags.Where(ht => ht.Equals(t));
+                        if (tagMatches.Any())
+                        {
+                            hitPriority = hits.First(hp => hp.collider.tag == tagMatches.First());
+                            success = true;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // Simply get the first hit if no priority tag list was specified
+                    hitPriority = hits.First();
+                    success = true;
+                }
+            }
 
             // If successful, get collided object and corresponding terrain position
             if (success)
             {
-                terrainPosition = ray.GetPoint(hit.distance);
+                terrainPosition = ray.GetPoint(hitPriority.distance);
                 terrainPosition.y = 0;
-                hitObject = hit.collider != null ? hit.collider.gameObject : null;
+                hitObject = hitPriority.collider != null ? hitPriority.collider.gameObject : null;
             }
             // If unsuccessful, assume out of terrain bounds and project the pointed position on the terrain plane
             else
@@ -202,7 +232,7 @@ namespace Cameras
                 var terrainPlane = new Plane(GroundTerrain.transform.up, GroundTerrain.transform.position);
                 float distance;
                 terrainPosition = terrainPlane.Raycast(ray, out distance) ? ray.GetPoint(distance) : Vector3.zero;
-                hitObject = null;
+                hitObject = GroundTerrain.gameObject;
             }
 
             return success;
@@ -212,11 +242,11 @@ namespace Cameras
 		private void SelectObject(Vector3 mousePosition, bool multipleSelect=false)
 		{
 			// Verify that selectable unit tags exist in the GameObject and that no button was previously clicked
-			if (SelectTags != null && !buttonClickedFlag)
+            if (SelectTagsByPriority != null && !buttonClickedFlag)
 			{		
                 Vector3 hitPosition;
                 GameObject hitObject;
-                GetPointedObject(mousePosition, out hitObject, out hitPosition);
+                GetPointedObject(mousePosition, out hitObject, out hitPosition, SelectTagsByPriority);
 
 				#if OUTPUT_DEBUG
 				#region DEBUG
@@ -227,7 +257,7 @@ namespace Cameras
 
 				// Verify if the hit gameobject is one of the selectable unit
 				bool anySelected = false;
-                if (hitObject != null && SelectTags.Contains(hitObject.tag))
+                if (hitObject != null && SelectTagsByPriority.Contains(hitObject.tag))
 				{		
 					// If the selected object is a building, unselect units and display icons of produced units
 					if (hitObject.tag == BuildingTag)
@@ -276,7 +306,7 @@ namespace Cameras
 					// Update unit selection
                     SelectUnit(hitObject);
                     UpdateIconsBuilderUnitSelected();
-					anySelected = (selectedUnits.Count > 0);
+                    anySelected = (selectedUnits.Any());
 
 					#if OUTPUT_DEBUG
 					#region DEBUG
@@ -303,10 +333,10 @@ namespace Cameras
 		{
             Vector3 hitPosition;
             GameObject hitObject;
-            GetPointedObject(mousePosition, out hitObject, out hitPosition);
+            GetPointedObject(mousePosition, out hitObject, out hitPosition, AttackTagsByPriority);
 
             bool anyCommand = false;
-            if (hitObject != null && AttackTags != null && selectedUnits.Count != 0)
+            if (hitObject != null && AttackTagsByPriority != null && selectedUnits.Count != 0)
 			{			
 				// Get newly pointed unit selection
 				#if OUTPUT_DEBUG
@@ -325,7 +355,7 @@ namespace Cameras
                             unitManager.MoveToDestination(hitPosition);
                             anyCommand = true;
                         }
-                        else if (AttackTags.Contains(hitObject.tag))
+                        else if (AttackTagsByPriority.Contains(hitObject.tag))
                         {
                             unitManager.AttackTarget(hitObject);
                             anyCommand = true;
@@ -413,7 +443,7 @@ namespace Cameras
 
             // Find all the units with a tag that allows their selection
             var selectableUnitList = new List<GameObject>(); 
-            foreach (var t in SelectTags)
+            foreach (var t in SelectTagsByPriority)
             {
                 if (t != BuildingTag) selectableUnitList.AddRange(GameObject.FindGameObjectsWithTag(t));
             }               
@@ -454,7 +484,7 @@ namespace Cameras
 
 
         // Returns -1 if the position is left of the line, 1 if on the right, and 0 if collinear 
-        private int PositionRelativeToVector(Vector3 position, Vector3 lineStart, Vector3 lineEnd, Vector3 up)
+        private static int PositionRelativeToVector(Vector3 position, Vector3 lineStart, Vector3 lineEnd, Vector3 up)
         {
             var lineVector = lineEnd - lineStart;
             var pointVector = position - lineStart;

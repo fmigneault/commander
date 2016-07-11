@@ -95,17 +95,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9db23a18ef8d86341b4b58d6777c142e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SelectTags:
+  SelectTagsByPriority:
+  - Unit
   - Tank
   - Builder
   - Building
+  AttackTagsByPriority:
   - Unit
-  AttackTags:
   - Tank
   - Builder
-  - Unit
   BuilderTag: Builder
   BuildingTag: Building
+  ButtonTag: 
   CanvasGUI: {fileID: 0}
   IconPanel: {fileID: 0}
   SelectionBox: {fileID: 0}
@@ -136,7 +137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ede681075acc4624fb4a33ab61319513, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lastTab: 2
+  lastTab: 0
   movementSettingsFoldout: 1
   zoomingSettingsFoldout: 0
   rotationSettingsFoldout: 1

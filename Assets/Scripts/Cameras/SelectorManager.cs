@@ -15,10 +15,18 @@ namespace Cameras
 {	
 	public class SelectorManager : MonoBehaviour 
 	{
+        // Tags are displayed using a custom editor that allows to select tags using the existing ones in a list
+        // Hide the values displayed by default when public (but have to be public to allow accessing them)
+        [HideInInspector]
 		public string[] SelectTags;			// Tags of GameObjects which selection is permitted
-		public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
-		public string BuilderTag;		    // Tag of GameObjects which are builder units
-		public string BuildingTag;			// Tag of GameObjects which are selectable buildings
+        [HideInInspector]
+        public string[] AttackTags;			// Tags of GameObjects which unit being attacked is permitted
+        [HideInInspector]
+        public string BuilderTag;		    // Tag of GameObjects which are builder units
+        [HideInInspector]
+        public string BuildingTag;			// Tag of GameObjects which are selectable buildings
+        [HideInInspector]
+        public string ButtonTag;            // Tag corresponding to a UI button
 
 		// GUI Elements
         public Canvas CanvasGUI;            // The overall canvas reference
@@ -172,8 +180,8 @@ namespace Cameras
         }
 
 
-        // Returns true if any object was hit, adjusts the hitObject and the terrain position accordingly
-        // If no object was hit, adjust the terrain position accordingly but return false and no hit object
+        // Returns true if any object was hit, adjusts 'hitObject' and the 'terrainPosition' accordingly
+        // If no object was hit, adjust 'terrainPosition' accordingly but return false and no 'hitObject'
         private bool GetPointedObject(Vector3 mousePosition, out GameObject hitObject, out Vector3 terrainPosition)
 		{
 			// Draw ray from camera toward pointed position
@@ -249,7 +257,7 @@ namespace Cameras
     						return;
                         }
 					}
-					else
+                    else if (hitObject.tag != ButtonTag)
 					{
                         UnselectBuilding();
 						ChangeIconPanelVisibility(IconPanel, false);

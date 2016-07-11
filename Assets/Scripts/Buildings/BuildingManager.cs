@@ -149,10 +149,11 @@ namespace Buildings
 
 				// Transfer the building faction color to the produced unit
 				var createdUnit = (GameObject)Instantiate(unit, SpawnPosition.position, SpawnPosition.rotation);
-                createdUnit.GetComponent<UnitManager>().FactionColor = FactionColor;
+                var createdUnitManager = createdUnit.GetComponent<UnitManager>();
+                createdUnitManager.FactionColor = FactionColor;
 
                 // Move the unit from spawn position to exit position
-                createdUnit.GetComponent<UnitManager>().MoveToDestination(ExitPosition.position);
+                createdUnitManager.MoveToDestination(ExitPosition.position, overridePathfinding: true);
 
                 // Wait for a delay (let unit exit the building)
                 yield return new WaitForSeconds(DoorCloseWaitTime);
@@ -161,7 +162,7 @@ namespace Buildings
 				CurrentDoorStatus = DoorStatus.CLOSING;
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);						
 			}
-		}
+		}            
 			
 
 		private void UpdateDoorPosition()

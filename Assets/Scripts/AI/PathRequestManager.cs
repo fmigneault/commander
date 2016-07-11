@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Output performance testing
+#define OUTPUT_TIMER
+
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,7 +20,11 @@ namespace AI
     	Pathfinding pathfinding;
     	bool isProcessingPath;
 
+        #region TEST TIMER
+        #if OUTPUT_TIMER
         private Stopwatch timer;    // For testing algorithm performances
+        #endif
+        #endregion
 
 
         struct PathRequest 
@@ -41,15 +48,18 @@ namespace AI
     		instance = this;
     		pathfinding = GetComponent<Pathfinding>();
 
-            // Testing
+            #region TEST TIMER
+            #if OUTPUT_TIMER
             timer = new Stopwatch();
+            #endif
+            #endregion
     	}
 
 
         // Function to request a new pathfinding request from outside code
     	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
         {
-    		var newRequest = new PathRequest(pathStart, pathEnd, callback);
+            var newRequest = new PathRequest(pathStart, pathEnd, callback);
     		instance.pathRequestQueue.Enqueue(newRequest);
     		instance.TryProcessNext();
     	}
@@ -63,7 +73,12 @@ namespace AI
                 currentPathRequest = instance.pathRequestQueue.Dequeue();
     			isProcessingPath = true;
 
+                #region TEST TIMER
+                #if OUTPUT_TIMER
                 timer.Start();
+                #endif
+                #endregion
+                
                 pathfinding.StartFindPath(currentPathRequest.PathStart, currentPathRequest.PathEnd);
     		}
     	}
@@ -72,9 +87,13 @@ namespace AI
         // Callback the function passed to indicate to the unit that the path request has been processed
     	public void FinishedProcessingPath(Vector3[] path, bool success) 
         {
+            #region TEST TIMER
+            #if OUTPUT_TIMER
             timer.Stop();
             UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms", timer.ElapsedMilliseconds));
             timer.Reset();
+            #endif
+            #endregion
 
     		currentPathRequest.Callback(path, success);
     		isProcessingPath = false;

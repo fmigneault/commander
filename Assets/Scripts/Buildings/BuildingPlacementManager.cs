@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cameras;
 using Units;
+using AI;
 
 namespace Buildings 
 {	
@@ -14,12 +15,15 @@ namespace Buildings
 	public class BuildingPlacementManager : MonoBehaviour 
     {       
         public Terrain GroundTerrain;           // Reference to terrain to align building with mouse position on ground
-        public List<string> PlacementCollisionTags = null;          // Collision tags considered for invalid placement
         public KeyCode BuildingPlacementCancelKey = KeyCode.Escape; // Keyboard button to cancel building placement
         public KeyCode BuildingMousePlaceKey = KeyCode.Mouse0;      // Mouse button to place at current position
         public KeyCode BuildingMouseRotationKey = KeyCode.Mouse1;   // Mouse button to rotate the buiding around itself   
         public KeyCode BuildingQuickRotationKey = KeyCode.R;        // Keyboard button to quickly rotate the building
         public float BuildingQuickRotationDegrees = 90;             // Angle for quick rotation of building
+        public GameObject UnwalkableColliders = null;   // Object with BoxColliders defining the building obstacle area
+
+        [HideInInspector]
+        public List<string> PlacementCollisionTags = null;          // Collision tags considered for invalid placement
 
         // RTS Camera control and references
         private bool originalMouseRotationStatus;   // Allows reset of the original 'useMouseRotation' setting
@@ -87,11 +91,7 @@ namespace Buildings
            
 
         // Flag that indicates if the building is currently being placed
-        public bool InPlacement
-        {
-            get;
-            set;
-        }
+        public bool InPlacement { get; set; }
 
 
 		public void RequestNewBuildingPlacement(GameObject constructionUnit)
@@ -136,6 +136,22 @@ namespace Buildings
 
                 // Reset global building placement flag
                 CameraRTS.GetComponent<SelectorManager>().AnyInPlacementFlag = false;
+
+                // Verify if the BoxCollider(s) can be found within the containing GameObject
+                if (UnwalkableColliders == null) return;
+                var colliders = UnwalkableColliders.GetComponents<BoxCollider>();
+                if (colliders == null || colliders.Length <= 0) return;
+
+                // Update the unwalkable node grid with the newly placed building area now obstructing the terrain
+                var corners = new Vector3[colliders.Length * 2];
+                for (var i = 0; i < colliders.Length; i++)
+                {     
+                    // Find the BoxCollider's minimum and maximum boundaries to 
+                    // specify as a localized region to search for obstructions
+                    corners[2 * i]     = colliders[i].bounds.min;                   
+                    corners[2 * i + 1] = colliders[i].bounds.max;
+                }
+                GridRequestManager.RequestGridAreaUpdate(corners);                
 
                 #if OUTPUT_DEBUG
                 #region DEBUG

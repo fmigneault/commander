@@ -41,7 +41,7 @@ namespace AI
         {
     		StartCoroutine(FindPath(startPos, targetPos));
     	}
-    	
+
 
         // A* Pathfinding Algorithm
     	IEnumerator FindPath(Vector3 startPos, Vector3 targetPos) 
@@ -52,7 +52,9 @@ namespace AI
     		Node startNode = grid.NodeFromWorldPoint(startPos);
     		Node targetNode = grid.NodeFromWorldPoint(targetPos);
 
-    		if (startNode.Walkable && targetNode.Walkable) 
+            // Both nodes must be walkable and different to search for a path
+            // Otherwise it is necessarily impossible or the target location is already reached
+    		if (startNode.Walkable && targetNode.Walkable && startNode != targetNode) 
             {
     			var openSet = new Heap<Node>(grid.MaxSize);     // Set of nodes to be evaluated
     			var closedSet = new HashSet<Node>();            // Set of nodes already evaluated

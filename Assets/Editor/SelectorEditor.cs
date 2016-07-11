@@ -19,12 +19,12 @@ namespace Editor
 
             // Update selected values for tags
             serializedObject.Update();
-            selectorManager.SelectTags = ListTagSelector.ShowList("Can be selected Tags:", 
-                                                                  serializedObject.FindProperty("SelectTags"),
-                                                                  selectorManager.SelectTags);
-            selectorManager.AttackTags = ListTagSelector.ShowList("Can be attacked Tags:",
-                                                                  serializedObject.FindProperty("AttackTags"),
-                                                                  selectorManager.AttackTags);
+            selectorManager.SelectTagsByPriority = ListTagSelector.ShowList("Can be selected Tags (sorted by priority):", 
+                                                                  serializedObject.FindProperty("SelectTagsByPriority"),
+                                                                  selectorManager.SelectTagsByPriority);
+            selectorManager.AttackTagsByPriority = ListTagSelector.ShowList("Can be attacked Tags (sorted by priority):",
+                                                                  serializedObject.FindProperty("AttackTagsByPriority"),
+                                                                  selectorManager.AttackTagsByPriority);
             selectorManager.BuilderTag = EditorGUILayout.TagField("Builder Tag: ", selectorManager.BuilderTag);
             selectorManager.BuildingTag = EditorGUILayout.TagField("Building Tag: ", selectorManager.BuildingTag);
             selectorManager.ButtonTag = EditorGUILayout.TagField("Button Tag: ", selectorManager.ButtonTag);

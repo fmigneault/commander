@@ -133,8 +133,14 @@ namespace Units
         }
 
 
+        public bool HoldFire { get; set; }
+
+
         private void ExecuteProjectileAnimation()
         {
+            // If hold-fire command is set, don't shoot (but aiming at target still handled by other the functions)
+            if (HoldFire) return;
+
             UnitManager targetUnitManager = null;
             if (AimingTarget != null) targetUnitManager = AimingTarget.GetComponent<UnitManager>();;
 
@@ -142,7 +148,8 @@ namespace Units
             //    There is a target with remaining health to attack, a projectile is specified, the unit to attack is
             //    within attack range, the current unit is not destroyed and the delay between shots fired has elapsed
             if (targetUnitManager != null && targetUnitManager.Health > 0 && AttackBullet != null && 
-                unitManager.InAttackRange(AimingTarget) && unitManager.Health > 0 && currentAttackDelay <= 0)
+                unitManager.InAttackRange(AimingTarget.transform.position) && unitManager.Health > 0 && 
+                currentAttackDelay <= 0)
             {
                 // Get the angle between the barrel output and the target
                 var barrelTowardTarget = AimingTarget.transform.position - CannonBarrel.transform.position;

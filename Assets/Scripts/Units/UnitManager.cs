@@ -122,24 +122,6 @@ namespace Units
         }
 
 
-        // When set to true, any outside commands from 'MoveToDestination' or 'AttackTarget' are ignored
-        private GameObject lockingObject = null;
-        public bool LockedCommandInput { get; private set; }
-        public void LockCommandInput(GameObject locker, bool lockStatus)
-        {             
-            if (locker != null && lockingObject == null)
-            {
-                lockingObject = locker;
-                LockedCommandInput = lockStatus;
-            }
-            else if (locker != null && lockingObject == locker)
-            {
-                LockedCommandInput = lockStatus;
-                if (!lockStatus) lockingObject = null;
-            }
-        }
-
-
         // Angle offset allowed to skip unit rotation to align itself toward its destination
         public float PermissiveDestinationAngleDelta { get; private set; }
 
@@ -151,8 +133,6 @@ namespace Units
         // Function for outside calls to request new destinations
         public void MoveToDestination(Vector3 destination, bool overridePathfinding = false)
         {      
-            if (LockedCommandInput) return;
-
             // Stop attacking if it was, then request to move
             AttackTarget(null);
 
@@ -171,9 +151,7 @@ namespace Units
 
         // Function for outside calls to request new target to attack
         public void AttackTarget(GameObject target)
-        {     
-            if (LockedCommandInput) return;
-
+        {
             // Do nothing if requested unit to attack is itself    
             if (target == gameObject) return;
 

@@ -154,8 +154,6 @@ namespace Buildings
 
                 // Move the unit from spawn position to exit position
                 createdUnitManager.MoveToDestination(ExitPosition.position, overridePathfinding: true);
-                createdUnitManager.LockCommandInput(gameObject, true);
-                StartCoroutine(MakeUnitAvailableWhenOutside(unit));
 
                 // Wait for a delay (let unit exit the building)
                 yield return new WaitForSeconds(DoorCloseWaitTime);
@@ -164,17 +162,7 @@ namespace Buildings
 				CurrentDoorStatus = DoorStatus.CLOSING;
 				yield return new WaitUntil(() => CurrentDoorStatus == DoorStatus.IDLE);						
 			}
-		}
-
-
-        private IEnumerator MakeUnitAvailableWhenOutside(GameObject unit)
-        {            
-            if (unit != null)
-            {                
-                yield return new WaitUntil(() => unit.transform.position != ExitPosition.position);
-                unit.GetComponent<UnitManager>().LockCommandInput(gameObject, false);
-            }
-        }
+		}            
 			
 
 		private void UpdateDoorPosition()

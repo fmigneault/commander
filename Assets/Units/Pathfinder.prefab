@@ -45,7 +45,7 @@ MonoBehaviour:
   DisplayGridGizmos: 0
   UnwalkableMask:
     serializedVersion: 2
-    m_Bits: 9216
+    m_Bits: 8192
   GroundTerrain: {fileID: 0}
   NodeRadius: 1
 --- !u!114 &11452876

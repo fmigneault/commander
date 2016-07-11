@@ -560,7 +560,7 @@ namespace Units
             if (waypointPath != null) 
             {
                 for (int i = waypointIndex; i < waypointPath.Length; i++) 
-                {
+                {                    
                     Gizmos.color = Color.black;
                     Gizmos.DrawCube(waypointPath[i], Vector3.one);
 

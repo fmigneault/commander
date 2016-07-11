@@ -10065,6 +10065,7 @@ MonoBehaviour:
   BuildingMouseRotationKey: 324
   BuildingQuickRotationKey: 114
   BuildingQuickRotationDegrees: 90
+  UnwalkableColliders: {fileID: 162424}
   PlacementCollisionTags:
   - Building
 --- !u!212 &21210510

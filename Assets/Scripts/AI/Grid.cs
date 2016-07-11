@@ -18,14 +18,16 @@ namespace AI
     	float nodeDiameter;
     	int gridSizeX, gridSizeY;
 
+
     	void Awake() 
         {
-    		nodeDiameter = NodeRadius*2;
+    		nodeDiameter = NodeRadius * 2;
             gridWorldSize = new Vector2(GroundTerrain.terrainData.size.x, GroundTerrain.terrainData.size.z);
-    		gridSizeX = Mathf.RoundToInt(gridWorldSize.x/nodeDiameter);
-    		gridSizeY = Mathf.RoundToInt(gridWorldSize.y/nodeDiameter);
+    		gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
+    		gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
     		CreateGrid();
     	}
+
 
     	public int MaxSize 
         {
@@ -41,9 +43,8 @@ namespace AI
 
 
     	private void CreateGrid() 
-        {
-            
-    		grid = new Node[gridSizeX,gridSizeY];
+        {            
+    		grid = new Node[gridSizeX, gridSizeY];
             Vector3 worldBottomLeft = GroundTerrain.transform.position + 
                                       Vector3.left * gridWorldSize.x / 2 + 
                                       Vector3.back * gridWorldSize.y / 2;
@@ -86,29 +87,72 @@ namespace AI
     	
 
     	public Node NodeFromWorldPoint(Vector3 worldPosition) 
-        {
-    		float percentX = (worldPosition.x + gridWorldSize.x/2) / gridWorldSize.x;
-    		float percentY = (worldPosition.z + gridWorldSize.y/2) / gridWorldSize.y;
+        {            
+            float percentX = (worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x;
+            float percentY = (worldPosition.z + gridWorldSize.y / 2) / gridWorldSize.y;
     		percentX = Mathf.Clamp01(percentX);
     		percentY = Mathf.Clamp01(percentY);
 
-    		int x = Mathf.RoundToInt((gridSizeX-1) * percentX);
-    		int y = Mathf.RoundToInt((gridSizeY-1) * percentY);
+    		int x = Mathf.RoundToInt((gridSizeX - 1) * percentX);
+    		int y = Mathf.RoundToInt((gridSizeY - 1) * percentY);
     		return grid[x,y];
     	}
-    	
 
-    	private void OnDrawGizmos() 
+
+        public void StartGridAreaUpdate(Vector3[] corners) 
         {
-    		Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x,1,gridWorldSize.y));
-    		if (grid != null && DisplayGridGizmos) 
+            StartCoroutine(GridAreaUpdate(corners));
+        }
+
+
+        private IEnumerator GridAreaUpdate(Vector3[] corners)
+        {
+            // Find the minimum and maximum node position to limit looping across the grid
+            //    Initialize min/max nodes with opposite values to ensure update on the first check of node indexes
+            var cornerNodes = new Node[corners.Length];
+            var minNodeX = gridSizeX - 1;
+            var minNodeY = gridSizeY - 1;
+            var maxNodeX = 0;
+            var maxNodeY = 0;
+            for (var i = 0; i < corners.Length; i++)
+            {                
+                cornerNodes[i] = NodeFromWorldPoint(corners[i]);
+                minNodeX = Mathf.Min(minNodeX, cornerNodes[i].GridX);
+                minNodeY = Mathf.Min(minNodeY, cornerNodes[i].GridY);
+                maxNodeX = Mathf.Max(maxNodeX, cornerNodes[i].GridX);
+                maxNodeY = Mathf.Max(maxNodeY, cornerNodes[i].GridY);
+            }
+
+            // Loop through the sub-area found within the min/max node positions, update the new obstructions
+            Vector3 worldBottomLeft = GroundTerrain.transform.position;
+            for (int x = minNodeX; x < maxNodeX; x++) 
             {
-    			foreach (Node n in grid) 
+                for (int y = minNodeY; y < maxNodeY; y++) 
                 {
-    				Gizmos.color = (n.Walkable) ? Color.white : Color.red;
-    				Gizmos.DrawCube(n.WorldPosition, Vector3.one * (nodeDiameter-.1f));
-    			}
-    		}
-    	}
+                    Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + NodeRadius) +
+                                                           Vector3.forward * (y * nodeDiameter + NodeRadius);
+                    bool walkable = !(Physics.CheckSphere(worldPoint, NodeRadius, UnwalkableMask));
+                    grid[x,y].Walkable &= walkable;
+                }
+            }
+                
+            yield return null;
+        }
+
+
+        private void OnDrawGizmos() 
+        {
+            Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
+            if (grid != null && DisplayGridGizmos) 
+            {
+                foreach (Node n in grid) 
+                {
+                    Gizmos.color = (n.Walkable) ? Color.white : Color.red;
+
+                    // Make some space between nodes by slightly reducing their diameter for better visibility
+                    Gizmos.DrawCube(n.WorldPosition,  Vector3.one * nodeDiameter * 0.9f);
+                }
+            }
+        }
     }
 }

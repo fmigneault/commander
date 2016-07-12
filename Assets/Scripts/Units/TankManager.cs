@@ -63,22 +63,23 @@ namespace Units
 			// Get the direction where the cannon has to look at:
 			// 	- If there is no target, look forward (normal position)
 			// 	- If a target to attack is specified, look toward it and adjust barrel angle if required
-			if (AimingTarget == null)
+            //  - If the unit requires whole body rotation to align its cannon toward the target, it must be 
+            //    explicitly asked to aim at it otherwise the 'else' condition locks the unit toward the target.
+            if (AimingTarget == null || (!AimBarrel && LockedTurretRotation))
 			{
 				targetDirection = transform.forward;
 			}
 			else
-			{
-				// Angle for turret rotation (Y)
+			{				
 				targetDirection = AimingTarget.transform.position - CannonTurret.transform.position;
 				targetDirection.y = CannonTurret.transform.position.y;
 			}
 
 			// Apply the required angle to turn toward the desired position with a rotation delay
-			//  - If rotate speed is zero (cannot rotate turret, turn the whole tank toward the target)
+			//  - Turn the whole tank toward the target if its turret rotation is locked
 			//  - Otherwise, only rotate the turret toward the target
 			Quaternion turretRelativeAngleY = Quaternion.LookRotation(targetDirection, Vector3.up);
-			if (CannonRotateSpeed == 0)
+            if (LockedTurretRotation)
 			{
 				transform.rotation = Quaternion.RotateTowards(transform.rotation, turretRelativeAngleY, 
                                                               unitManager.RotationSpeed * Time.deltaTime);
@@ -93,20 +94,20 @@ namespace Units
 
 
 		private void AdjustCannonBarrelRotation() 
-		{	
+		{	            
 			Quaternion barrelRelativeAngleX;	
-			if (BarrelLockOnTarget && AimingTarget != null)
+			if (BarrelLockOnTarget && AimingTarget != null && AimBarrel)
 			{
 				// For lock on specified target, rotate the barrel to point toward it 
                 var towardTarget = AimingTarget.transform.position - CannonTurret.transform.position;
 				barrelRelativeAngleX = Quaternion.LookRotation(towardTarget, CannonBarrel.transform.up);
 			}
-			else if (!BarrelLockOnTarget && AimingTarget != null)
+            else if (!BarrelLockOnTarget && AimingTarget != null && AimBarrel)
 			{
 				// For specific rotation angle, find remaining upward rotation of barrel and apply offsets until reached
 				float currentBarrelAngle = Vector3.Angle(CannonTurret.transform.forward, 
                                                          CannonBarrel.transform.forward);
-				float rotationOffset = currentBarrelAngle - BarrelAttackAngle;
+                float rotationOffset = currentBarrelAngle - BarrelAttackAngle;
 				if (Mathf.Abs(rotationOffset) > barrelRotationDelta)
 				{ 
 					rotationOffset = -barrelRotationDelta;
@@ -126,6 +127,13 @@ namespace Units
 		}
 
 
+        //  If rotate speed is zero, the unit cannot rotate turret by default
+        public bool LockedTurretRotation { get { return CannonRotateSpeed.Equals(0); } }
+
+
+        public bool AimBarrel { get; set; }
+
+
         private bool ProjectileVisibility
         {
             set { AttackBullet.SetActive(value); }
@@ -133,8 +141,14 @@ namespace Units
         }
 
 
+        public bool HoldFire { get; set; }
+
+
         private void ExecuteProjectileAnimation()
         {
+            // If hold-fire command is set, don't shoot (but aiming at target still handled by other the functions)
+            if (HoldFire) return;
+
             UnitManager targetUnitManager = null;
             if (AimingTarget != null) targetUnitManager = AimingTarget.GetComponent<UnitManager>();;
 
@@ -142,7 +156,8 @@ namespace Units
             //    There is a target with remaining health to attack, a projectile is specified, the unit to attack is
             //    within attack range, the current unit is not destroyed and the delay between shots fired has elapsed
             if (targetUnitManager != null && targetUnitManager.Health > 0 && AttackBullet != null && 
-                unitManager.InAttackRange(AimingTarget) && unitManager.Health > 0 && currentAttackDelay <= 0)
+                unitManager.InAttackRange(AimingTarget.transform.position) && unitManager.Health > 0 && 
+                currentAttackDelay <= 0)
             {
                 // Get the angle between the barrel output and the target
                 var barrelTowardTarget = AimingTarget.transform.position - CannonBarrel.transform.position;

@@ -871,12 +871,12 @@ MonoBehaviour:
   CanAttackGround: 1
   CanAttackAir: 0
   MinAttackRange: 50
-  MaxAttackRange: 60
+  MaxAttackRange: 75
   Health: 100
   HitPoints: 25
   ProductionDelay: 16
   MovingSpeed: 6
-  RotationSpeed: 45
+  RotationSpeed: 60
   DestructionMinimumDelay: 5
   AfterDestructionDelay: 4
   DestructionTranlateSpeed: 0.01
@@ -902,6 +902,7 @@ MonoBehaviour:
   Unit: {fileID: 183634}
   OffsetAboveUnit: 5
   SizeOnScreen: 3
+  ForceVisible: 0
 --- !u!114 &11465964
 MonoBehaviour:
   m_ObjectHideFlags: 1

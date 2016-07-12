@@ -64,6 +64,11 @@ namespace Units
         private Vector3[] waypointPath = null;  // Current waypoints defining the path to follow
         private int waypointIndex = 0;          // Current waypoint position along the path
 
+        // Pathfinding parameters to limit excessive requests
+        private const float delayBetweenRequests = 0.25f;       // Elapsed time required for the next path request
+        private float elapsedTimeSinceLastRequest = 0f;         // Tracking of time since last pathfinding request
+        private const float minimumDistanceForRequest = 2f;     // Minimum target movement required for path update
+
         // Internal memory of attack target
         private GameObject attackTarget = null; // Currently assigned target the unit was commanded to attack    
         private bool newAttackCommand = false;  // Indicates if the currently assigned target has just been assigned
@@ -105,7 +110,10 @@ namespace Units
 
 
         void Update()
-        {      
+        {    
+            // Update timer
+            elapsedTimeSinceLastRequest += Time.deltaTime;
+
             // Update health, then apply actions accordingly to specified commands and current statuses
             if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
             if (Health > 0)
@@ -252,8 +260,9 @@ namespace Units
                         // Get current status of unit and its target
                         var targetPosition = attackTarget.transform.position;
                         bool targetChangedPosition = false;
+                        var distanceFromTarget = Vector3.Distance(transform.position, targetPosition);
                         inRange = InAttackRange(targetPosition);
-                        tooCloseToTarget = Vector3.Distance(transform.position, targetPosition) < MinAttackRange;
+                        tooCloseToTarget = distanceFromTarget < MinAttackRange;
                         if (waypointPath != null && waypointPath.Length > 0)
                         {
                             // Target is in sight if the unit is on the last waypoint path segment, which ensures 
@@ -293,8 +302,8 @@ namespace Units
                             destinationRequest = GetPositionInRange(targetPosition);
                         }
                             
-                        // If too close to the target, move away until the minimum range is respected, but stay as
-                        // close a possible to ensure that the target will be in range for longer if it tries to escape
+                        // If too close to the target, move away until the minimum range is respected, but stay close 
+                        // to ensure that the target will be in range for longer if it tries to escape afterwards
                         else if (tooCloseToTarget)
                         {
                             var backtrackPosition = GetPositionTooClose(targetPosition);
@@ -317,10 +326,11 @@ namespace Units
                 }
             }
 
-            // Attack movement and shooting animation when there is a target in range and in-sight
-            // Otherwise cancel any attack command temporarily
-            // If the unit is too close or too far, but still in-sight, keep aiming but hold-fire
-            AttackDelegate(inSight ? attackTarget : null, tooCloseToTarget || !inRange);
+            // Attack movement and shooting animation when there is a target in-range and in-sight
+            //  - If out-of-sight, cancel any attack command temporarily and stop shooting (null target)
+            //  - If the unit is out-of-range, but still in-sight, keep aiming but hold-fire
+            //  - If the unit is out-of-range and out-of-sight, stop aiming at the target
+            AttackDelegate(inSight ? attackTarget : null, !inRange, inRange);
         }
 
 
@@ -334,7 +344,7 @@ namespace Units
         private static bool InRangeArea(Vector3 targetPosition, Vector3 lastKnownPosition)
         {
             // Check an approximate area around the last known position
-            return Vector3.Distance(targetPosition, lastKnownPosition) <= 5;
+            return Vector3.Distance(targetPosition, lastKnownPosition) <= minimumDistanceForRequest;
         }
 
 
@@ -360,12 +370,13 @@ namespace Units
 
 
 		// Function that delegates "Attack" calls to sub-classes of the GameObject linked to this "UnitManager" class
-        private void AttackDelegate(GameObject target, bool holdFire)
+        private void AttackDelegate(GameObject target, bool holdFire, bool aimBarrel)
 		{
             if (gameObject.tag == "Tank")
             {
                 var tank = GetComponent<TankManager>();
                 tank.HoldFire = holdFire;
+                tank.AimBarrel = aimBarrel;
                 tank.AimingTarget = target;
             }
 		}
@@ -468,9 +479,13 @@ namespace Units
         // Controlled path request call using the interlock one-shot flag 
         // This function should always be used instead of accessing directly the 'PathRequestManager'
         private void ControlledPathRequest(Vector3 startPosition, Vector3 endPosition)
-        {
-            CancelPathRequest = false;  // Reset flag since the following call is for intentional reception of new path
-            PathRequestManager.RequestPath(startPosition, endPosition, OnPathFound);
+        {            
+            if (elapsedTimeSinceLastRequest >= delayBetweenRequests)
+            {
+                CancelPathRequest = false;  // Reset flag since the next call is intentional for a new path
+                PathRequestManager.RequestPath(startPosition, endPosition, OnPathFound);
+                elapsedTimeSinceLastRequest = 0;
+            }
         }
             
 
@@ -479,10 +494,10 @@ namespace Units
         {
             // Update only if pathfinding was successful and not cancelled while the trajectory was being processed
             if (pathSuccess && !CancelPathRequest)
-            {                     
+            {           
                 waypointPath = newPath;                 // Update the found path waypoints
                 waypointIndex = 0;                      // Start at the first waypoint position as a destination
-                destinationRequest = waypointPath[0];   // Initial waypoint in path as first destination
+                destinationRequest = waypointPath[0];   // Initial waypoint in path as first destination                
             }
             else if (CancelPathRequest)
             {

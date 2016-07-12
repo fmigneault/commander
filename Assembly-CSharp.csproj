@@ -96,6 +96,7 @@
      <Compile Include="Assets\Scripts\AI\Node.cs" />
      <Compile Include="Assets\Scripts\AI\PathRequestManager.cs" />
      <Compile Include="Assets\Scripts\AI\Pathfinding.cs" />
+     <Compile Include="Assets\Scripts\AI\WaypointPath.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingManager.cs" />
      <Compile Include="Assets\Scripts\Buildings\BuildingPlacementManager.cs" />
      <Compile Include="Assets\Scripts\Cameras\MiniMapManager.cs" />

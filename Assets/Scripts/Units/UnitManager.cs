@@ -58,20 +58,19 @@ namespace Units
         // Parameters for building construction (only if "builder" unit)
 		public List<GameObject> ProducedBuildings = null;
 
-        // Internal memory of requested destination, the waypoint path and the index along these waypoints
+        // Internal memory of requested destination and the waypoint path the unit must follow
         //    Important: Temporarily assign origin position, but will be updated on initialization (Awake)
         private Vector3 destinationRequest = Vector3.zero;
-        private Vector3[] waypointPath = null;  // Current waypoints defining the path to follow
-        private int waypointIndex = 0;          // Current waypoint position along the path
+        private readonly WaypointPath waypointPath = new WaypointPath();  // Waypoints defining the unit's trajectory
 
         // Internal memory of attack target
-        private GameObject attackTarget = null; // Currently assigned target the unit was commanded to attack    
-        private bool newAttackCommand = false;  // Indicates if the currently assigned target has just been assigned
+        private GameObject attackTarget = null;     // Currently assigned target the unit was commanded to attack    
+        private bool newAttackCommand = false;      // Indicates if the currently assigned target has just been assigned
 
         // To allow displaying effects on multiple subsequent movemnets, we require more than one effect instance
-        //    Using only one instance sometimes makes it  suddenly, because following movement require the 
-        //    effect faster than it can complete it's previous call. Therefore, we use a list of available effects
-        //    that we gradually cycle through upon each new movement.
+        //    Using only one instance sometimes makes it  suddenly, because following movement require the effect
+        //    faster than it can complete it's previous call. Therefore, we use a list of available effects that we 
+        //    gradually cycle through upon each new movement.
         private const int totalMovementEffects = 5;         // Quantity of ParticleSystem effects to instanciate
         private int activeMovementEffect = 0;               // Control variable to cycle through the effects as neede
         private bool previousMovement = false;              // Control variable to switch to the next effect
@@ -109,8 +108,8 @@ namespace Units
             // Update health, then apply actions accordingly to specified commands and current statuses
             if (HealthBar != null) HealthBar.Health = (float)Health / (float)maxHealth;
             if (Health > 0)
-            {            
-                CheckNextWaypointInPath();    
+            {      
+                CheckForNextWaypointInPath();
                 UpdateAttackUnit();
                 if (!UpdateRotateUnit()) return;
                 UpdateMoveUnit();
@@ -140,12 +139,26 @@ namespace Units
             if (overridePathfinding)
             {
                 destinationRequest = destination;
-                waypointPath = null;
+                waypointPath.Clear();
             }
             else
             {
-                ControlledPathRequest(transform.position, destination);
+                waypointPath.NewRequest(transform.position, destination);
             }
+        }
+
+
+        // 
+        // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
+        public void CheckForNextWaypointInPath() 
+        {    
+            // If there is no path specified, return immediately
+            if (waypointPath.Empty) return;
+
+            // If the currently set waypoint destination is reached, pass to the next waypoint in the path
+            if (waypointPath.CurrentWaypoint == transform.position) waypointPath.MoveNext();
+            // Otherwise, adjust the next waypoint as the unit's required destination for the next frame
+            else destinationRequest = waypointPath.CurrentWaypoint;
         }
 
 
@@ -239,13 +252,10 @@ namespace Units
 
                         // If the target gets destroyed, in some cases like when the backtrack position is calculated 
                         // because of too close range, the unit tends to still move at the target's position because the 
-                        // waypoints path still exists and the next position gets extracted automatically. Also, in 
-                        // some cases, a previous request has not yet finished being processed, and when it does, it 
-                        // overrides the adjustments done here. Therefore, adjust the unit's destination to its current 
-                        // location, reset the waypoints to stop moving and indicate a controlled cancel path request.
+                        // waypoints path still exists and the next position gets extracted automatically. Therefore,
+                        // reset the unit's destination to its current location and reset the waypoints to stop moving. 
                         destinationRequest = transform.position;
-                        waypointPath = null;        // Reset waypoints path       
-                        CancelPathRequest = true;   // Cncel any next path request received after waypoint reset
+                        waypointPath.Clear();       // Reset waypoints path
                     }
                     else if (RespectsAttackTypes(targetUnitManager))
                     {
@@ -254,7 +264,7 @@ namespace Units
                         bool targetChangedPosition = false;
                         inRange = InAttackRange(targetPosition);
                         tooCloseToTarget = Vector3.Distance(transform.position, targetPosition) < MinAttackRange;
-                        if (waypointPath != null && waypointPath.Length > 0)
+                        if (!waypointPath.Empty)
                         {
                             // Target is in sight if the unit is on the last waypoint path segment, which ensures 
                             // automatically that it avoids shooting through obstacles because of how pathfinding works
@@ -262,16 +272,14 @@ namespace Units
                             // the first waypoint segment because the requested waypoints path is to move away, which 
                             // makes it possible to move at final location located behind an obstacle while the unit 
                             // and its target are currently not obstructed on the first segment. 
-                            inSight = tooCloseToTarget ? (waypointIndex == 0) : 
-                                                         (waypointPath.Length - waypointIndex) <= 1;
+                            inSight = tooCloseToTarget ? waypointPath.AtFirstWaypoint : waypointPath.AtLastWaypoint;
 
                             // Checking an area instead of simply verifying for different positions slightly limits the
                             // quantity of pathfinding requested without affecting too much the destination precision.
-                            //    The target will have to move sufficiently away to trigger a new calculation instead 
-                            //    of extensively calling new requests on each frame as target position are continuously 
-                            //    changing as displacements are occuring.
-                            var lastKnownTargetPosition = waypointPath[waypointPath.Length - 1];
-                            targetChangedPosition = !InRangeArea(targetPosition, lastKnownTargetPosition);
+                            //    The target will have to move sufficiently away from its last know position to trigger
+                            //    a new calculation instead of extensively calling new requests on each frame as target 
+                            //    position are continuously changing as displacements are occuring.
+                            targetChangedPosition = !InRangeArea(targetPosition, waypointPath.LastWaypoint);
                         }
 
                         // If already within attack range for a new target to attack, cancel any movement
@@ -298,7 +306,7 @@ namespace Units
                         else if (tooCloseToTarget)
                         {
                             var backtrackPosition = GetPositionTooClose(targetPosition);
-                            ControlledPathRequest(transform.position, backtrackPosition);
+                            waypointPath.NewRequest(transform.position, backtrackPosition);
                         }
 
                         // Request a new pathfinding search to get path waypoints only as necessary
@@ -308,7 +316,7 @@ namespace Units
                         //      sight by an obstacle, so validation is required.
                         else if (newAttackCommand || targetChangedPosition)
                         {
-                            ControlledPathRequest(transform.position, targetPosition);
+                            waypointPath.NewRequest(transform.position, targetPosition);
                             newAttackCommand = false;   // Reset for next calls
                         }                            
                     }
@@ -458,65 +466,18 @@ namespace Units
             if (tag == "Tank") GetComponent<TankManager>().DestroyInstanciatedReferences();
         }
 
-
-        // One-Shot flag that will cancel updating the next received path request
-        // Used to account for delays between a request, its reception, and new events conditiosn occuring in between
-        // Used in conjunction with the controlled path request function
-        private bool CancelPathRequest { get; set; }
-
-
-        // Controlled path request call using the interlock one-shot flag 
-        // This function should always be used instead of accessing directly the 'PathRequestManager'
-        private void ControlledPathRequest(Vector3 startPosition, Vector3 endPosition)
-        {
-            CancelPathRequest = false;  // Reset flag since the following call is for intentional reception of new path
-            PathRequestManager.RequestPath(startPosition, endPosition, OnPathFound);
-        }
-            
-
-        // Callback method for when the path request has finished being processed 
-        public void OnPathFound(Vector3[] newPath, bool pathSuccess)
-        {
-            // Update only if pathfinding was successful and not cancelled while the trajectory was being processed
-            if (pathSuccess && !CancelPathRequest)
-            {                     
-                waypointPath = newPath;                 // Update the found path waypoints
-                waypointIndex = 0;                      // Start at the first waypoint position as a destination
-                destinationRequest = waypointPath[0];   // Initial waypoint in path as first destination
-            }
-            else if (CancelPathRequest)
-            {
-                CancelPathRequest = false;  // Reset one-shot since the processed path was received and cancelled
-            }
-        }
-
-
-        // Assigns the next waypoint in the path as a new destination when the current one is reached by the unit
-        private void CheckNextWaypointInPath() 
-        {    
-            // If the is no path specified return immediately
-            if (waypointPath == null) return;
-
-            // If the last waypoint was reached, the unit is at the final destination. Unset the path waypoints.
-            if (waypointIndex >= waypointPath.Length) waypointPath = null;
-            // If the currently set waypoint destination is reached, pass to the next waypoint in the path
-            else if (waypointPath[waypointIndex] == transform.position) waypointIndex++;
-            // Otherwise, adjust the next waypoints as the current unit's required destination
-            else destinationRequest = waypointPath[waypointIndex];
-        }
-
-
+       
         // Draws the waypoints with connected lines to form the returned path to avoid obstables
         private void OnDrawGizmos()
         {
             if (waypointPath != null) 
             {
-                for (int i = waypointIndex; i < waypointPath.Length; i++) 
+                for (int i = waypointPath.CurrentIndex; i < waypointPath.TotalCount; i++) 
                 {                    
                     Gizmos.color = Color.black;
                     Gizmos.DrawCube(waypointPath[i], Vector3.one);
 
-                    if (i == waypointIndex) 
+                    if (i == waypointPath.CurrentIndex) 
                     {
                         Gizmos.DrawLine(transform.position, waypointPath[i]);
                     }

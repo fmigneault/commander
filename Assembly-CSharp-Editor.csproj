@@ -54,11 +54,10 @@
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONBumpedDetailSpec_01.shader" />
      <None Include="Assets\Units\Health\Shaders\AlphaProgress.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\readme.txt" />
-     <None Include="Assets\Imported\ParticleSystems\Shaders\PriorityParticleAlpha.shader" />
-     <None Include="Assets\Imported\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
+     <None Include="Assets\ParticleSystems\Shaders\PriorityParticleAlpha.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Modern_ConcreteBuildingExt_01.xml" />
-     <None Include="Assets\Imported\ParticleSystems\Shaders\PriorityParticleAddSoft.shader" />
-     <None Include="Assets\Imported\ParticleSystems\Shaders\PriorityParticleAdd.shader" />
+     <None Include="Assets\ParticleSystems\Shaders\PriorityParticleAddSoft.shader" />
+     <None Include="Assets\ParticleSystems\Shaders\PriorityParticleAdd.shader" />
      <None Include="Assets\Buildings\ModernConcreteFacades\Shaders\ZGONShaderOps.cginc" />
  <Reference Include="UnityEditor.Advertisements">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/Advertisements/Editor/UnityEditor.Advertisements.dll</HintPath>

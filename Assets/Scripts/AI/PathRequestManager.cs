@@ -29,16 +29,18 @@ namespace AI
 
         struct PathRequest 
         {
-            public PathRequest(Vector3 start, Vector3 end, Action<Vector3[], bool> callback)
+            public PathRequest(Vector3 start, Vector3 end, int id, Action<Vector3[], bool> callback)
             {
                 PathStart = start;
                 PathEnd = end;
+                ID = id;
                 Callback = callback;
             }
 
 
             public Vector3 PathStart { get; private set; }
             public Vector3 PathEnd { get; private set; }
+            public int ID { get; private set; }
             public Action<Vector3[], bool> Callback { get; private set; }
         }
 
@@ -57,9 +59,10 @@ namespace AI
 
 
         // Function to request a new pathfinding request from outside code
-    	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
+    	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, 
+                                       int requesterId, Action<Vector3[], bool> callback)
         {
-            var newRequest = new PathRequest(pathStart, pathEnd, callback);
+            var newRequest = new PathRequest(pathStart, pathEnd, requesterId, callback);
     		instance.pathRequestQueue.Enqueue(newRequest);
     		instance.TryProcessNext();
     	}
@@ -79,7 +82,9 @@ namespace AI
                 #endif
                 #endregion
                 
-                pathfinding.StartFindPath(currentPathRequest.PathStart, currentPathRequest.PathEnd);
+                pathfinding.StartFindPath(currentPathRequest.PathStart, 
+                                          currentPathRequest.PathEnd, 
+                                          currentPathRequest.ID);
     		}
     	}
 

@@ -5,9 +5,10 @@ namespace AI
 {
     public class Node : IHeapItem<Node> 
     {
-    	public Node(bool walkable, Vector3 worldPosition, int gridX, int gridY) 
+    	public Node(bool walkable, int objectID, Vector3 worldPosition, int gridX, int gridY) 
         {
-    		Walkable = walkable;
+            Walkable = walkable;
+            ObjectID = objectID;
     		WorldPosition = worldPosition;
     		GridX = gridX;
     		GridY = gridY;
@@ -18,7 +19,8 @@ namespace AI
         public int hCost { get; set; }                      // Distance from end node (heuristic)
         public int fCost { get { return gCost + hCost; } }  // Total cost (minimization)
 
-        public bool Walkable { get; set; }
+        public bool Walkable { get; set; }                  // Indicates if the node is walkable (at any time)
+        public int ObjectID { get; set; }                   // Indicates the object ID occupying the node (temporary)
         public Vector3 WorldPosition { get; set; }
         public int GridX { get; set; }
         public int GridY { get; set; }

@@ -8,7 +8,8 @@ namespace AI
     {
         // Parameter settings
     	public bool DisplayGridGizmos;
-    	public LayerMask UnwalkableMask;    
+    	public LayerMask UnwalkableMask;
+        public LayerMask OccupiedMask;
     	public Terrain GroundTerrain;       // Reference to the terrain to generate nodes over its full area
     	public float NodeRadius;            // World positions precision according to Nodes size
     	
@@ -27,6 +28,11 @@ namespace AI
     		gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
     		CreateGrid();
     	}
+
+
+        // To ensure unique object statuses saved in the node, we use their unique instance ID
+        // To have a default value representing "no object" present on a node, we use the pathfinder's ID
+        public int NoObject { get { return GetInstanceID(); } }
 
 
     	public int MaxSize 
@@ -52,12 +58,65 @@ namespace AI
     			for (int y = 0; y < gridSizeY; y++) 
                 {
     				Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + NodeRadius) +
-                                         Vector3.forward * (y * nodeDiameter + NodeRadius);
-    				bool walkable = !(Physics.CheckSphere(worldPoint, NodeRadius, UnwalkableMask));
-    				grid[x,y] = new Node(walkable, worldPoint, x, y);
+                                         Vector3.forward * (y * nodeDiameter + NodeRadius);                    
+                    grid[x,y] = new Node(!IsObstructed(worldPoint), NoObject, worldPoint, x, y);
     			}
     		}
     	}
+
+
+        private bool IsObstructed(Vector3 worldPoint)
+        {
+            return Physics.CheckSphere(worldPoint, NodeRadius, UnwalkableMask);
+        }
+
+
+        public bool IsWalkable(Node node)
+        {
+            return node.Walkable;
+        }
+
+
+        public bool IsWalkable(int x, int y)
+        {
+            return IsWalkable(grid[x, y]);
+        }
+
+
+        public bool IsWalkableByObject(Node node, int id)
+        {
+            return IsWalkable(node) || IsOccupiedByObject(node, id);
+        }
+
+
+        public bool IsWalkableByObject(int x, int y, int id)
+        {
+            return IsWalkable(grid[x, y]) || IsOccupiedByObject(grid[x, y], id);
+        }
+
+
+        private bool IsOccupied(Vector3 worldPoint)
+        {
+            return Physics.CheckSphere(worldPoint, NodeRadius, OccupiedMask);
+        }
+
+
+        private bool IsOccupied(Node node)
+        {
+            return (node.ObjectID != NoObject);
+        }
+
+
+        public bool IsOccupiedByObject(Node node, int id)
+        {
+            return (node.ObjectID == id);
+        }
+
+
+        public bool IsOccupiedByObject(int x, int y, int id)
+        {
+            return IsOccupiedByObject(grid[x, y], id);
+        }
 
 
         public List<Node> GetNeighbors(Node node) 
@@ -97,14 +156,18 @@ namespace AI
     	}
 
 
-        public void StartGridAreaUpdate(Vector3[] corners) 
+        public void StartGridAreaUpdate(Vector3[] corners, int objectID) 
         {
-            StartCoroutine(GridAreaUpdate(corners));
+            StartCoroutine(GridAreaUpdate(corners, objectID));
         }
 
 
-        private IEnumerator GridAreaUpdate(Vector3[] corners)
-        {
+        private IEnumerator GridAreaUpdate(Vector3[] corners, int objectID = default(int))
+        {     
+            // Required because a constant value must be specified as default parameter
+            // Replace with appropriate value in case the constant is changed eventually
+            if (objectID == default(int)) objectID = NoObject;
+
             // Find the minimum and maximum node position to limit looping across the grid
             //    Initialize min/max nodes with opposite values to ensure update on the first check of node indexes
             var cornerNodes = new Node[corners.Length];
@@ -128,9 +191,19 @@ namespace AI
                 for (int y = minNodeY; y < maxNodeY; y++) 
                 {
                     Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + NodeRadius) +
-                                                           Vector3.forward * (y * nodeDiameter + NodeRadius);
-                    bool walkable = !(Physics.CheckSphere(worldPoint, NodeRadius, UnwalkableMask));
-                    grid[x,y].Walkable &= walkable;
+                                                           Vector3.forward * (y * nodeDiameter + NodeRadius);                    
+                    
+                    // If the node was walkable or was occupied by the object specified, update the value accordingly
+                    // Otherwise, the node is already unwalkable or is occupied by another object, so cannot be updated
+                    if (IsWalkable(x, y) || IsOccupiedByObject(x, y, objectID))
+                    {
+                        // Replace the status by the current object's ID if it is located over this node position
+                        // Otherwise set as general 'walkable' status by default with no object
+                        var occupied = IsOccupied(worldPoint);
+                        var obstructed = IsObstructed(worldPoint);
+                        grid[x, y].Walkable = !occupied && !obstructed;
+                        grid[x, y].ObjectID = occupied ? objectID : NoObject;
+                    }
                 }
             }
                 
@@ -143,12 +216,16 @@ namespace AI
             Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
             if (grid != null && DisplayGridGizmos) 
             {
-                foreach (Node n in grid) 
+                foreach (var node in grid) 
                 {
-                    Gizmos.color = (n.Walkable) ? Color.white : Color.red;
+                    Gizmos.color = IsWalkable(node) 
+                                   ? Color.white 
+                                   : IsOccupied(node) 
+                                   ? Color.yellow 
+                                   : Color.red;
 
                     // Make some space between nodes by slightly reducing their diameter for better visibility
-                    Gizmos.DrawCube(n.WorldPosition,  Vector3.one * nodeDiameter * 0.9f);
+                    Gizmos.DrawCube(node.WorldPosition,  Vector3.one * nodeDiameter * 0.9f);
                 }
             }
         }

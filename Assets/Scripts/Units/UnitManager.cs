@@ -109,6 +109,13 @@ namespace Units
 		}
 
 
+        void Start()
+        {
+            // Update position on 'Start' to ensure the grid has been generated beforehand in its 'Awake' call
+            UddatePositionOnGrid();
+        }
+
+
         void Update()
         {    
             // Update timer
@@ -181,6 +188,9 @@ namespace Units
                 previousMovement = true;            // Indicate the unit is in movement
                 transform.position = newPosition;   // Adjust the intermediate new position toward the destination
 
+                // Update the unit's position on the grid to avoid collisions with other units (unwalkable by others)
+                UddatePositionOnGrid();
+
                 // Move, rotate and display the movement effects at the current unit location
                 if (movementEffects != null)
                 {
@@ -209,6 +219,9 @@ namespace Units
             var angleFromDestination = Vector3.Angle(towardDestination, transform.forward);
             if (angleFromDestination > PermissiveDestinationAngleDelta && !towardDestination.Equals(Vector3.zero))
             {   
+                // Update the unit's position on the grid to avoid collisions with other units (unwalkable by others)
+                UddatePositionOnGrid();
+
                 // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
                 // the particles suddenly rotate when the next emission is requested as the forward movement resumes
                 if (movementEffects != null)
@@ -382,6 +395,24 @@ namespace Units
 		}
 
 
+        private void UddatePositionOnGrid()
+        {            
+            // Find the BoxCollider's minimum and maximum boundaries to 
+            // specify as a localized region to search for obstructions
+            var corners = new Vector3[2];
+            var colliderBounds = GetComponent<BoxCollider>().bounds;
+
+            // Extend the bounds to make sure to capture the unit's current, previous and next positions to 
+            // properly update the grid object values for all surrounding nodes affected the unit at any time
+            colliderBounds.extents = new Vector3(colliderBounds.extents.x * 2, 0, colliderBounds.extents.z * 2);
+            corners[0] = colliderBounds.min;                   
+            corners[1] = colliderBounds.max;
+
+            // Request the update of grid obstruction by the unit
+            GridRequestManager.RequestGridAreaUpdate(corners, GetInstanceID());
+        }       
+
+
         public IEnumerator DestroyUnit()
         {            
             // Stop the unit onto it's current location (cannot move anymore) and stop attacking any previous target
@@ -483,7 +514,7 @@ namespace Units
             if (elapsedTimeSinceLastRequest >= delayBetweenRequests)
             {
                 CancelPathRequest = false;  // Reset flag since the next call is intentional for a new path
-                PathRequestManager.RequestPath(startPosition, endPosition, OnPathFound);
+                PathRequestManager.RequestPath(startPosition, endPosition, GetInstanceID(), OnPathFound);
                 elapsedTimeSinceLastRequest = 0;
             }
         }

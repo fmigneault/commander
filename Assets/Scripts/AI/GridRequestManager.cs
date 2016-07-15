@@ -21,7 +21,7 @@ namespace AI
         }
 
 
-        public static void RequestGridAreaUpdate(Vector3[] corners)
+        public static void RequestGridAreaUpdate(Vector3[] corners, int objectID = default(int))
         {
             // Validate existing list of corners
             if (corners == null || corners.Length <= 0) return;
@@ -37,7 +37,7 @@ namespace AI
             }
 
             // Request the grid update
-            instance.grid.StartGridAreaUpdate(corners);
+            instance.grid.StartGridAreaUpdate(corners, objectID);
         }
     }
 }

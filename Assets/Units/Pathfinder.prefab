@@ -11,7 +11,7 @@ GameObject:
   - 114: {fileID: 11433028}
   - 114: {fileID: 11452876}
   - 114: {fileID: 11492514}
-  - 114: {fileID: 11418806}
+  - 114: {fileID: 11457886}
   m_Layer: 0
   m_Name: Pathfinder
   m_TagString: Untagged
@@ -32,18 +32,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!114 &11418806
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 126224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 811f73e560405f140b2e7002f7fd5e9e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GroundTerrain: {fileID: 0}
 --- !u!114 &11433028
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -58,7 +46,10 @@ MonoBehaviour:
   DisplayGridGizmos: 0
   UnwalkableMask:
     serializedVersion: 2
-    m_Bits: 12288
+    m_Bits: 8192
+  OccupiedMask:
+    serializedVersion: 2
+    m_Bits: 2048
   GroundTerrain: {fileID: 0}
   NodeRadius: 1
 --- !u!114 &11452876
@@ -74,6 +65,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Algorithm: 2
   Cost: 0
+--- !u!114 &11457886
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 126224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 811f73e560405f140b2e7002f7fd5e9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GroundTerrain: {fileID: 0}
 --- !u!114 &11492514
 MonoBehaviour:
   m_ObjectHideFlags: 1

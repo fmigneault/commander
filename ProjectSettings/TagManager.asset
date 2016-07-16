@@ -18,6 +18,7 @@ TagManager:
   - MiniMapCamera
   - Fire
   - Effect
+  - Tree
   layers:
   - Default
   - TransparentFX
@@ -31,7 +32,7 @@ TagManager:
   - Terrain
   - Building
   - Unit
-  - 
+  - Tree
   - Unwalkable
   - 
   - 

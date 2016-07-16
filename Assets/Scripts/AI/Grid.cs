@@ -45,9 +45,7 @@ namespace AI
     	private void CreateGrid() 
         {            
     		grid = new Node[gridSizeX, gridSizeY];
-            Vector3 worldBottomLeft = GroundTerrain.transform.position + 
-                                      Vector3.left * gridWorldSize.x / 2 + 
-                                      Vector3.back * gridWorldSize.y / 2;
+            Vector3 worldBottomLeft = GroundTerrain.transform.position;
 
     		for (int x = 0; x < gridSizeX; x++) 
             {

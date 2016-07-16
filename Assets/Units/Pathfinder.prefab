@@ -46,7 +46,7 @@ MonoBehaviour:
   DisplayGridGizmos: 0
   UnwalkableMask:
     serializedVersion: 2
-    m_Bits: 8192
+    m_Bits: 12288
   OccupiedMask:
     serializedVersion: 2
     m_Bits: 2048

@@ -151,7 +151,7 @@ namespace Buildings
                     corners[2 * i]     = colliders[i].bounds.min;                   
                     corners[2 * i + 1] = colliders[i].bounds.max;
                 }
-                GridRequestManager.RequestGridAreaUpdate(corners);                
+                GridRequestManager.RequestGridAreaUpdate(corners, GetInstanceID());
 
                 #if OUTPUT_DEBUG
                 #region DEBUG

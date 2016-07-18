@@ -37,14 +37,14 @@ namespace AI
     	}
     	
     	
-    	public void StartFindPath(Vector3 startPos, Vector3 targetPos, int id) 
+        public void StartFindPath(Vector3 startPos, Vector3 targetPos, int unitID, int targetID) 
         {
-            StartCoroutine(FindPath(startPos, targetPos, id));
+            StartCoroutine(FindPath(startPos, targetPos, unitID, targetID));
     	}
 
 
         // A* Pathfinding Algorithm
-        IEnumerator FindPath(Vector3 startPos, Vector3 targetPos, int id) 
+        IEnumerator FindPath(Vector3 startPos, Vector3 targetPos, int unitID, int targetID) 
         {
     		var waypoints = new Vector3[0]; // Waypoints that will compose the final reduced path the unit must follow
     		bool pathSuccess = false;
@@ -55,7 +55,9 @@ namespace AI
             // Both nodes must be walkable and different to search for a path
             // Otherwise it is necessarily impossible or the target location is already reached
             // Start node is verified against the object to avoid 'impossible' path noted as unwalkable by the object
-            if (startNode != targetNode && grid.IsWalkable(targetNode) && grid.IsWalkableByObject(startNode, id)) 
+            // Target node must be verified against the object and a facultative target unit to avoid 'impossible' path 
+            if (startNode != targetNode && grid.IsWalkableByObject(startNode, unitID) && 
+                (grid.IsWalkableByObject(targetNode, unitID) || grid.IsWalkableByObject(targetNode, targetID))) 
             {
     			var openSet = new Heap<Node>(grid.MaxSize);     // Set of nodes to be evaluated
     			var closedSet = new HashSet<Node>();            // Set of nodes already evaluated
@@ -71,7 +73,7 @@ namespace AI
 
                     // Lazy Theta* pre-setting of visible neighbors to limit line-of-sight calls only to required cases
                     if (Algorithm == AlgorithmType.LAZY_THETA_STAR && 
-                        !InLineOfSight(currentNode.Parent, currentNode, id))
+                        !InLineOfSight(currentNode.Parent, currentNode, unitID, targetID))
                     {
                         int min = int.MaxValue;
                         foreach (Node neighbor in grid.GetNeighbors(currentNode))
@@ -101,16 +103,18 @@ namespace AI
     				foreach (Node neighbor in grid.GetNeighbors(currentNode)) 
                     {
                         // Evaluate only un-evaluated and traversable nodes
-                        if (!grid.IsWalkableByObject(neighbor, id) || closedSet.Contains(neighbor)) continue;
+                        if (!(grid.IsWalkableByObject(neighbor, unitID) || 
+                              grid.IsWalkableByObject(neighbor, targetID)) || 
+                            closedSet.Contains(neighbor)) continue;
 
                         // Path 2: Employed only by Theta*, allows any-angle for smoother paths 
                         //    Instead of limiting to 8-connected neighbors, therefore imposing 45 degree angles, the 
                         //    parents of the neighbors and the current node are used to look at higher distances as 
                         //    long as the evaluated distance remains in line-of-sight (ie: doesn't traverse unwalkable)
-                        if ((Algorithm == AlgorithmType.THETA_STAR && 
-                            InLineOfSight(currentNode.Parent, neighbor, id)) ||
-                            Algorithm == AlgorithmType.LAZY_THETA_STAR)
-                        {       
+                        if (Algorithm == AlgorithmType.LAZY_THETA_STAR || 
+                            (Algorithm == AlgorithmType.THETA_STAR && 
+                             InLineOfSight(currentNode.Parent, neighbor, unitID, targetID)))
+                        {                            
                             int gCostCurrentParent = gCostValue(currentNode.Parent.gCost);
                             int gCostNeighbor = gCostValue(neighbor.gCost * neighbor.gCost);
                             int moveCostNeighborParent = gCostCurrentParent + NodeDistance(currentNode.Parent, neighbor);
@@ -213,7 +217,7 @@ namespace AI
 
 
         // Verifies if two nodes can linearly see each other without passing over a non traversable node
-        bool InLineOfSight(Node nodeA, Node nodeB, int id)
+        bool InLineOfSight(Node nodeA, Node nodeB, int unitID, int targetID)
         {            
             int x0 = nodeA.GridX;
             int y0 = nodeA.GridY;
@@ -244,13 +248,17 @@ namespace AI
                     f += dy;
                     if (f >= dx)
                     {                        
-                        if (!grid.IsWalkableByObject(x0 + ssx, y0 + ssy, id)) return false;
+                        if (!(grid.IsWalkableByObject(x0 + ssx, y0 + ssy, unitID) || 
+                              grid.IsWalkableByObject(x0 + ssx, y0 + ssy, targetID))) return false;
                         y0 += sy;
                         f -= dx;
                     }
-                    if (f != 0 && !grid.IsWalkableByObject(x0 + ssx, y0 + ssy, id)) return false;
-                    if (dy == 0 && !grid.IsWalkableByObject(x0 + ssx, y0, id) && 
-                                   !grid.IsWalkableByObject(x0 + ssx, y0 - 1, id)) return false;
+                    if (f != 0 && !(grid.IsWalkableByObject(x0 + ssx, y0 + ssy, unitID) || 
+                                    grid.IsWalkableByObject(x0 + ssx, y0 + ssy, targetID))) return false;                        
+                    if (dy == 0 && !(grid.IsWalkableByObject(x0 + ssx, y0, unitID) || 
+                                     grid.IsWalkableByObject(x0 + ssx, y0, targetID)) &&
+                                   !(grid.IsWalkableByObject(x0 + ssx, y0 - 1, unitID) || 
+                                     grid.IsWalkableByObject(x0 + ssx, y0 - 1, targetID))) return false;
                     x0 += sx;
                 }
             }
@@ -261,13 +269,17 @@ namespace AI
                     f += dx;
                     if (f >= dy)
                     {
-                        if (!grid.IsWalkableByObject(x0 + ssx, y0 + ssy, id)) return false;
+                        if (!(grid.IsWalkableByObject(x0 + ssx, y0 + ssy, unitID) ||
+                              grid.IsWalkableByObject(x0 + ssx, y0 + ssy, targetID))) return false;
                         x0 += sx;
                         f -= dy;
                     }
-                    if (f != 0 && !grid.IsWalkableByObject(x0 + ssx, y0 + ssy, id)) return false;
-                    if (dx == 0 && !grid.IsWalkableByObject(x0, y0 + ssy, id) && 
-                                   !grid.IsWalkableByObject(x0 - 1, y0 + ssy, id)) return false;
+                    if (f != 0 && !(grid.IsWalkableByObject(x0 + ssx, y0 + ssy, unitID) || 
+                                    grid.IsWalkableByObject(x0 + ssx, y0 + ssy, targetID))) return false;
+                    if (dx == 0 && !(grid.IsWalkableByObject(x0, y0 + ssy, unitID) || 
+                                     grid.IsWalkableByObject(x0, y0 + ssy, targetID)) && 
+                                   !(grid.IsWalkableByObject(x0 - 1, y0 + ssy, unitID) || 
+                                     grid.IsWalkableByObject(x0 - 1, y0 + ssy, targetID))) return false;
                     y0 += sy;
                 }
             }

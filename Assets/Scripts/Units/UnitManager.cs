@@ -94,6 +94,7 @@ namespace Units
             InitializeParticleEffects();
             HealthBar = GetComponentInChildren<HealthBarManager>();
             maxHealth = Health;
+            UnitID = UnitTracker.GetNewUnitID();
 
             // Minimum degree angle required to skip the unit rotation, above will require rotate toward destination
             PermissiveDestinationAngleDelta = 1;
@@ -112,7 +113,7 @@ namespace Units
         void Start()
         {
             // Update position on 'Start' to ensure the grid has been generated beforehand in its 'Awake' call
-            UddatePositionOnGrid();
+            UpdatePositionOnGrid();
         }
 
 
@@ -189,7 +190,7 @@ namespace Units
                 transform.position = newPosition;   // Adjust the intermediate new position toward the destination
 
                 // Update the unit's position on the grid to avoid collisions with other units (unwalkable by others)
-                UddatePositionOnGrid();
+                UpdatePositionOnGrid();
 
                 // Move, rotate and display the movement effects at the current unit location
                 if (movementEffects != null)
@@ -220,7 +221,7 @@ namespace Units
             if (angleFromDestination > PermissiveDestinationAngleDelta && !towardDestination.Equals(Vector3.zero))
             {   
                 // Update the unit's position on the grid to avoid collisions with other units (unwalkable by others)
-                UddatePositionOnGrid();
+                UpdatePositionOnGrid();
 
                 // Stop the particle emission if rotation is needed, otherwise, it makes a weird visible effect where 
                 // the particles suddenly rotate when the next emission is requested as the forward movement resumes
@@ -347,6 +348,9 @@ namespace Units
         }
 
 
+        public int UnitID { get; private set; }
+
+
 		private bool RespectsAttackTypes(UnitManager targetUnitManager)
 		{
 			return ((targetUnitManager.IsAirUnit && CanAttackAir) || 
@@ -395,7 +399,7 @@ namespace Units
 		}
 
 
-        private void UddatePositionOnGrid()
+        private void UpdatePositionOnGrid()
         {            
             // Find the BoxCollider's minimum and maximum boundaries to 
             // specify as a localized region to search for obstructions
@@ -408,8 +412,8 @@ namespace Units
             corners[0] = colliderBounds.min;                   
             corners[1] = colliderBounds.max;
 
-            // Request the update of grid obstruction by the unit
-            GridRequestManager.RequestGridAreaUpdate(corners, GetInstanceID());
+            // Request the update of grid obstruction by the unit, or reset the area when the unit is destroyed
+            GridRequestManager.RequestGridAreaUpdate(corners, UnitID, Health <= 0);
         }       
 
 
@@ -450,7 +454,10 @@ namespace Units
                 yield return new WaitForFixedUpdate();
             }
 
-            // Destroy all instanciated references, then destoy the actual unit
+            // Reset the grid area to make it available to other units
+            UpdatePositionOnGrid();
+
+            // Destroy all instanciated references, then destoy the actual unit instance
             DestroyInstanciatedReferences();
             Destroy(gameObject);
         }
@@ -513,9 +520,14 @@ namespace Units
         {            
             if (elapsedTimeSinceLastRequest >= delayBetweenRequests)
             {
-                CancelPathRequest = false;  // Reset flag since the next call is intentional for a new path
-                PathRequestManager.RequestPath(startPosition, endPosition, GetInstanceID(), OnPathFound);
-                elapsedTimeSinceLastRequest = 0;
+                CancelPathRequest = false;          // Reset flag since the next call is intentional for a new path
+
+                // Send a new pathfinding request using the unit and target IDs for grid collision validation
+                var attackTargetID = attackTarget != null ? attackTarget.GetComponent<UnitManager>().UnitID 
+                                                          : UnitTracker.InvalidID;
+                PathRequestManager.RequestPath(startPosition, endPosition, OnPathFound, UnitID, attackTargetID);
+
+                elapsedTimeSinceLastRequest = 0;    // Reset timer for future pathfinding requests limitation
             }
         }
             

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AI
 {
@@ -30,9 +31,8 @@ namespace AI
     	}
 
 
-        // To ensure unique object statuses saved in the node, we use their unique instance ID
-        // To have a default value representing "no object" present on a node, we use the pathfinder's ID
-        public int NoObject { get { return GetInstanceID(); } }
+        // To ensure unique object statuses saved in the node, we use their unique ID
+        public int NoObject { get { return UnitTracker.InvalidID; } }
 
 
     	public int MaxSize 
@@ -85,13 +85,13 @@ namespace AI
 
         public bool IsWalkableByObject(Node node, int id)
         {
-            return IsWalkable(node) || IsOccupiedByObject(node, id);
+            return IsWalkable(node) && (!IsOccupied(node) || IsOccupiedByObject(node, id));
         }
 
 
         public bool IsWalkableByObject(int x, int y, int id)
         {
-            return IsWalkable(grid[x, y]) || IsOccupiedByObject(grid[x, y], id);
+            return IsWalkable(grid[x, y]) && (!IsOccupied(grid[x, y]) || IsOccupiedByObject(grid[x, y], id));
         }
 
 
@@ -104,6 +104,12 @@ namespace AI
         private bool IsOccupied(Node node)
         {
             return (node.ObjectID != NoObject);
+        }
+
+
+        private bool IsOccupied(int x, int y)
+        {
+            return IsOccupied(grid[x, y]);
         }
 
 
@@ -156,18 +162,14 @@ namespace AI
     	}
 
 
-        public void StartGridAreaUpdate(Vector3[] corners, int objectID) 
+        public void StartGridAreaUpdate(Vector3[] corners, int objectID, bool reset=false) 
         {
-            StartCoroutine(GridAreaUpdate(corners, objectID));
+            StartCoroutine(GridAreaUpdate(corners, objectID, reset));
         }
 
 
-        private IEnumerator GridAreaUpdate(Vector3[] corners, int objectID = default(int))
-        {     
-            // Required because a constant value must be specified as default parameter
-            // Replace with appropriate value in case the constant is changed eventually
-            if (objectID == default(int)) objectID = NoObject;
-
+        private IEnumerator GridAreaUpdate(Vector3[] corners, int objectID, bool reset=false)
+        {
             // Find the minimum and maximum node position to limit looping across the grid
             //    Initialize min/max nodes with opposite values to ensure update on the first check of node indexes
             var cornerNodes = new Node[corners.Length];
@@ -192,17 +194,15 @@ namespace AI
                 {
                     Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + NodeRadius) +
                                                            Vector3.forward * (y * nodeDiameter + NodeRadius);                    
-                    
-                    // If the node was walkable or was occupied by the object specified, update the value accordingly
+
+                    // Only if the node is walkable, if unoccupied or occupied by the object specified, update the value
                     // Otherwise, the node is already unwalkable or is occupied by another object, so cannot be updated
-                    if (IsWalkable(x, y) || IsOccupiedByObject(x, y, objectID))
+                    if (IsWalkable(x, y) && (IsOccupiedByObject(x, y, objectID) || !IsOccupied(x, y)))
                     {
                         // Replace the status by the current object's ID if it is located over this node position
-                        // Otherwise set as general 'walkable' status by default with no object
-                        var occupied = IsOccupied(worldPoint);
-                        var obstructed = IsObstructed(worldPoint);
-                        grid[x, y].Walkable = !occupied && !obstructed;
-                        grid[x, y].ObjectID = occupied ? objectID : NoObject;
+                        // Otherwise set as general 'walkable' status by default with no object                       
+                        grid[x, y].Walkable = !IsObstructed(worldPoint) || reset;
+                        grid[x, y].ObjectID = IsOccupied(worldPoint) && !reset ? objectID : NoObject;
                     }
                 }
             }
@@ -218,11 +218,9 @@ namespace AI
             {
                 foreach (var node in grid) 
                 {
-                    Gizmos.color = IsWalkable(node) 
-                                   ? Color.white 
-                                   : IsOccupied(node) 
-                                   ? Color.yellow 
-                                   : Color.red;
+                    Gizmos.color = IsOccupied(node) ? Color.yellow : 
+                                   IsWalkable(node) ? Color.white : 
+                                                      Color.red;
 
                     // Make some space between nodes by slightly reducing their diameter for better visibility
                     Gizmos.DrawCube(node.WorldPosition,  Vector3.one * nodeDiameter * 0.9f);

@@ -12,6 +12,7 @@ GameObject:
   - 114: {fileID: 11452876}
   - 114: {fileID: 11492514}
   - 114: {fileID: 11457886}
+  - 114: {fileID: 11498540}
   m_Layer: 0
   m_Name: Pathfinder
   m_TagString: Untagged
@@ -86,6 +87,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eebcefe535a1f487a9242514b2c0f782, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &11498540
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 126224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a601f344dc07454d9fb4ed711809351, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &100100000

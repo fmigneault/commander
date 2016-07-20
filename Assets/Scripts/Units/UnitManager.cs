@@ -382,7 +382,7 @@ namespace Units
 
         private Vector3 GetPositionTooClose(Vector3 targetPosition)
         {
-            return (transform.position - targetPosition) * MinAttackRange;
+            return transform.position + (transform.position - targetPosition).normalized * MinAttackRange;
         }
 
 

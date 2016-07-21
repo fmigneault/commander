@@ -491,9 +491,7 @@ namespace Cameras
             var perpendicular = Vector3.Cross(lineVector, pointVector);
             var direction = Vector3.Dot(perpendicular, up);
 
-            if (direction > 0) return 1;
-            else if (direction < 0) return -1;
-            else return 0;
+            return (int)Mathf.Sign(direction);
         }
 
 

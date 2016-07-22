@@ -417,10 +417,11 @@ namespace Cameras
             //    Corner clockwise order: (Start -> Corner1 -> End -> Corner2)
             var mousePositionCorner1 = new Vector3(mousePositionStart.x, mousePositionEnd.y, 0);
             var mousePositionCorner2 = new Vector3(mousePositionEnd.x, mousePositionStart.y, 0);
-            var towarScreen = Vector3.forward;
-            if (PositionRelativeToVector(mousePositionCorner1, mousePositionStart, mousePositionEnd, towarScreen) < 1)
+            var extraCornerOrder = PositionRelativeToLineSegment(mousePositionCorner1, mousePositionStart, 
+                                                                 mousePositionEnd, Vector3.forward);
+            // Inverse extra corners if not ordered properly, so that we get the required clockwise order
+            if (extraCornerOrder < 1)
             {
-                // Inverse extra corners if not positionned properly, so that we get the clockwise order required
                 var tmp = mousePositionCorner1;
                 mousePositionCorner1 = mousePositionCorner2;
                 mousePositionCorner2 = tmp;
@@ -457,14 +458,14 @@ namespace Cameras
                 // Unit is within the 4 selection region corners projected on the terrain if its position is to the 
                 // right of each border forming the trapezoid shape in a clockwise order for any camera orientation
                 //    Border clockwise order: (Start -> Corner1 -> End -> Corner2)
-                if (PositionRelativeToVector(unit.transform.position, terrainPositionStart, terrainPositionCorner1, 
-                                             GroundTerrain.transform.up) >= 0 && 
-                    PositionRelativeToVector(unit.transform.position, terrainPositionCorner1, terrainPositionEnd, 
-                                             GroundTerrain.transform.up) >= 0 &&
-                    PositionRelativeToVector(unit.transform.position, terrainPositionEnd, terrainPositionCorner2, 
-                                             GroundTerrain.transform.up) >= 0 &&
-                    PositionRelativeToVector(unit.transform.position, terrainPositionCorner2, terrainPositionStart, 
-                                             GroundTerrain.transform.up) >= 0)
+                if (PositionRelativeToLineSegment(unit.transform.position, terrainPositionStart, terrainPositionCorner1, 
+                                                  GroundTerrain.transform.up) >= 0 && 
+                    PositionRelativeToLineSegment(unit.transform.position, terrainPositionCorner1, terrainPositionEnd, 
+                                                  GroundTerrain.transform.up) >= 0 &&
+                    PositionRelativeToLineSegment(unit.transform.position, terrainPositionEnd, terrainPositionCorner2, 
+                                                  GroundTerrain.transform.up) >= 0 &&
+                    PositionRelativeToLineSegment(unit.transform.position, terrainPositionCorner2, terrainPositionStart, 
+                                                  GroundTerrain.transform.up) >= 0)
                 {
                     SelectUnit(unit);
                 }
@@ -484,7 +485,7 @@ namespace Cameras
 
 
         // Returns -1 if the position is left of the line, 1 if on the right, and 0 if collinear 
-        private static int PositionRelativeToVector(Vector3 position, Vector3 lineStart, Vector3 lineEnd, Vector3 up)
+        private static int PositionRelativeToLineSegment(Vector3 position, Vector3 lineStart, Vector3 lineEnd, Vector3 up)
         {
             var lineVector = lineEnd - lineStart;
             var pointVector = position - lineStart;
